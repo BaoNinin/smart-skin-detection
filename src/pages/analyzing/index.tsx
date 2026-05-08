@@ -16,12 +16,13 @@ interface SkinAnalysisResult {
   pores?: number
   blackheads?: number
   recommendations: string[]
+  imageUrl?: string | null
 }
 
 type AnalysisStep = 'activating' | 'success' | 'analyzing' | 'processing' | 'preview' | 'completed'
 
 export default function AnalyzingPage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [imagePath, setImagePath] = useState('')
   const [currentStep, setCurrentStep] = useState<AnalysisStep>('activating')
   const [analyzing, setAnalyzing] = useState(false)
@@ -39,14 +40,11 @@ export default function AnalyzingPage() {
   // AI 分析进度相关
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [currentAnalysisTask, setCurrentAnalysisTask] = useState('')
-  const [analysisTasks] = useState([
-    { id: 1, text: '分析皮肤纹理...', duration: 800 },
-    { id: 2, text: '分析肤色特征...', duration: 600 },
-    { id: 3, text: '评估水油状态...', duration: 700 },
-    { id: 4, text: '检测肤质问题...', duration: 900 },
-    { id: 5, text: '评估毛孔大小...', duration: 600 },
-    { id: 6, text: '生成分析报告...', duration: 800 }
-  ])
+  const taskTextsZh = ['分析皮肤纹理...', '分析肤色特征...', '评估水油状态...', '检测肤质问题...', '评估毛孔大小...', '生成分析报告...']
+  const taskTextsEn = ['Analyzing skin texture...', 'Analyzing skin tone...', 'Evaluating moisture & oil...', 'Detecting skin concerns...', 'Assessing pore size...', 'Generating report...']
+  const taskTexts = lang === 'en' ? taskTextsEn : taskTextsZh
+  const taskDurations = [800, 600, 700, 900, 600, 800]
+  const analysisTasks = taskTexts.map((text, i) => ({ id: i + 1, text, duration: taskDurations[i] }))
   
   // 结果预览相关
   const [previewResult, setPreviewResult] = useState<SkinAnalysisResult | null>(null)
@@ -119,17 +117,17 @@ export default function AnalyzingPage() {
 
   const steps = scanSuccess
     ? [
-        { icon: '🔌', text: t.analyzing.stepActivating, step: 'activating' },
-        { icon: '✅', text: t.analyzing.stepComplete, step: 'success' },
-        { icon: '🔬', text: t.analyzing.stepAnalyzing, step: 'analyzing' },
-        { icon: '⚡', text: t.analyzing.stepProcessing, step: 'processing' },
-        { icon: '📊', text: t.analyzing.stepPreviewReady, step: 'preview' },
-        { icon: '✨', text: t.analyzing.stepComplete, step: 'completed' }
+        { icon: '🔌', text: lang === 'en' ? 'Preparing...' : '正在准备分析...', step: 'activating' },
+        { icon: '✅', text: lang === 'en' ? 'Recognized' : '识别成功', step: 'success' },
+        { icon: '🔬', text: lang === 'en' ? 'AI Analyzing...' : 'AI 正在分析肤质...', step: 'analyzing' },
+        { icon: '⚡', text: lang === 'en' ? 'Deep Analysis...' : '深度分析中...', step: 'processing' },
+        { icon: '📊', text: lang === 'en' ? 'Generating Report...' : '生成报告...', step: 'preview' },
+        { icon: '✨', text: lang === 'en' ? 'Done!' : lang === 'en' ? 'Analysis Complete!' : '分析完成！', step: 'completed' }
       ]
     : [
-        { icon: '🔬', text: t.analyzing.stepAnalyzing, step: 'analyzing' },
-        { icon: '📊', text: t.analyzing.stepPreviewReady, step: 'preview' },
-        { icon: '✨', text: t.analyzing.stepComplete, step: 'completed' }
+        { icon: '🔬', text: lang === 'en' ? 'AI Analyzing...' : 'AI 正在分析肤质...', step: 'analyzing' },
+        { icon: '📊', text: lang === 'en' ? 'Generating Report...' : '生成报告...', step: 'preview' },
+        { icon: '✨', text: lang === 'en' ? 'Done!' : lang === 'en' ? 'Analysis Complete!' : '分析完成！', step: 'completed' }
       ]
 
   useEffect(() => {
@@ -208,10 +206,16 @@ export default function AnalyzingPage() {
 
     try {
       const userId = Taro.getStorageSync('userId')
+      const formData: Record<string, string> = {}
+      if (userId) {
+        formData.userId = String(userId)
+      }
+
       const res = await Network.uploadFile({
-        url: `/api/skin/analyze?userId=${userId}`,
+        url: '/api/skin/analyze',
         filePath: path,
         name: 'image',
+        formData
       })
 
       const data = JSON.parse(res.data)
@@ -220,9 +224,10 @@ export default function AnalyzingPage() {
       
       if (data.code === 200) {
         const result = data.data as SkinAnalysisResult
+        const persistentImagePath = result.imageUrl || path
         console.log('皮肤分析结果:', result)
         Taro.setStorageSync('skinAnalysisResult', result)
-        Taro.setStorageSync('currentImagePath', path)
+        Taro.setStorageSync('currentImagePath', persistentImagePath)
         
         // 保存分析时间戳（用于冷却时间检查）
         Taro.setStorageSync('lastAnalysisTime', Date.now())
@@ -258,7 +263,7 @@ export default function AnalyzingPage() {
             pores: result.pores || 0,
             blackheads: result.blackheads || 0,
             recommendations: result.recommendations,
-            imageUrl: path
+            imageUrl: persistentImagePath
           }
           console.log('历史记录数据:', historyData)
           
@@ -300,7 +305,7 @@ export default function AnalyzingPage() {
               console.error('=== 历史记录保存失败 ===')
               console.error('错误信息:', historyRes.data.msg)
               Taro.showToast({
-                title: '保存失败: ' + (historyRes.data.msg || '未知错误'),
+                title: t.analyzing.saveFail(historyRes.data.msg || 'Unknown error'),
                 icon: 'none',
                 duration: 2000
               })
@@ -309,7 +314,7 @@ export default function AnalyzingPage() {
             console.error('=== 历史记录保存异常 ===')
             console.error('错误信息:', err)
             Taro.showToast({
-              title: '保存失败，请检查网络',
+              title: t.analyzing.saveNetworkFail,
               icon: 'none',
               duration: 2000
             })
@@ -501,7 +506,7 @@ export default function AnalyzingPage() {
 
         {/* 当前步骤文字 */}
         <Text className="text-xl font-semibold text-gray-800 mb-4 block text-center">
-          {steps.find(s => s.step === currentStep)?.text || '分析中...'}
+          {steps.find(s => s.step === currentStep)?.text || t.analyzing.stepDefault}
         </Text>
 
         {/* AI 分析任务进度 */}
@@ -599,7 +604,7 @@ export default function AnalyzingPage() {
               {/* 自动跳转倒计时 */}
               <View className="text-center">
                 <Text className="text-sm text-gray-500 block">
-                  {t.analyzing.autoJump(autoJumpCountdown)}
+                  {lang === 'en' ? `Auto-jumping in ${autoJumpCountdown}s` : t.analyzing.autoJump(autoJumpCountdown)}
                 </Text>
               </View>
             </View>

@@ -1,8 +1,10 @@
+import { useI18n } from '@/i18n'
 import { View, Text, Image, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { cameraState } from '@/utils/cameraState'
 
 export default function CameraPreviewPage() {
+  const { t } = useI18n()
   const imageSrc = cameraState.previewImageSrc
   const sysInfo = Taro.getSystemInfoSync()
   const statusBarHeight = sysInfo.statusBarHeight || 44

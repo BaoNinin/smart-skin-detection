@@ -1,3 +1,4 @@
+import { useI18n } from '@/i18n'
 import { View, Text, Button, Camera, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
@@ -13,6 +14,7 @@ interface SkinAnalysisResult {
 }
 
 export default function SkinDetectionPage() {
+  const { t } = useI18n()
   const [isWeapp, setIsWeapp] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
   const [capturedImage, setCapturedImage] = useState('')

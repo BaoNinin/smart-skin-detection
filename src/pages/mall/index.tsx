@@ -1,21 +1,15 @@
 import { View, Text } from '@tarojs/components'
+import { useI18n } from '@/i18n'
 
 export default function MallPage() {
+  const { t } = useI18n()
   return (
-    <View className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-      <View className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-        <Text className="text-6xl">🛍️</Text>
+    <View className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <View className="text-center">
+        <Text className="text-4xl block mb-4">🛍️</Text>
+        <Text className="text-xl font-semibold text-gray-800 block">{t.mall.title}</Text>
+        <Text className="text-sm text-gray-500 mt-2 block">{t.mall.noProducts}</Text>
       </View>
-
-      <Text className="text-2xl font-bold text-gray-800 mb-3 block">商城</Text>
-
-      <Text className="text-base text-gray-500 text-center px-8 block">
-        商城功能正在开发中
-      </Text>
-
-      <Text className="text-sm text-gray-400 text-center px-8 mt-4 block">
-        敬请期待更多优质护肤产品
-      </Text>
     </View>
   )
 }

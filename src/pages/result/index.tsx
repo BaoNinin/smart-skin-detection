@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import RadarChart from '@/components/RadarChart'
 import OverallScore from '@/components/OverallScore'
 import BackHomeNavBar from '@/components/BackHomeNavBar'
+import { calculateSkinScore } from '@/utils/skin'
 import { useI18n } from '@/i18n'
 
 interface SkinAnalysisResult {
@@ -21,7 +22,7 @@ interface SkinAnalysisResult {
 }
 
 export default function ResultPage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [result, setResult] = useState<SkinAnalysisResult | null>(null)
   const [imagePath, setImagePath] = useState('')
 
@@ -33,10 +34,7 @@ export default function ResultPage() {
       setResult(analysisResult)
       setImagePath(currentImage || '')
     } else {
-      Taro.showToast({
-        title: t.result.notFound,
-        icon: 'none'
-      })
+      Taro.showToast({ title: t.result.notFound, icon: 'none' })
       setTimeout(() => {
         Taro.switchTab({ url: '/pages/landing/index' })
       }, 1500)
@@ -45,13 +43,7 @@ export default function ResultPage() {
 
   const calculateOverallScore = () => {
     if (!result) return 0
-    const scores = [result.moisture, 100 - result.oiliness, 100 - result.sensitivity]
-    if (result.acne) scores.push(100 - result.acne)
-    if (result.wrinkles) scores.push(100 - result.wrinkles)
-    if (result.spots) scores.push(100 - result.spots)
-    if (result.pores) scores.push(100 - result.pores)
-    if (result.blackheads) scores.push(100 - result.blackheads)
-    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    return calculateSkinScore(result)
   }
 
   const overallScore = calculateOverallScore()
@@ -59,7 +51,6 @@ export default function ResultPage() {
 
   const getRadarData = () => {
     if (!result) return []
-
     return [
       { name: t.result.moisture, value: result.moisture, color: '#3B82F6' },
       { name: t.result.oiliness, value: 100 - result.oiliness, color: '#10B981' },
@@ -69,53 +60,29 @@ export default function ResultPage() {
     ]
   }
 
-  const handleReDetect = () => {
-    Taro.redirectTo({
-      url: '/pages/camera/index'
-    })
-  }
+  const handleReDetect = () => { Taro.redirectTo({ url: '/pages/camera/index' }) }
+  const handleViewDetail = () => { Taro.navigateTo({ url: '/pages/result-detail/index' }) }
+  const handleViewHistory = () => { Taro.switchTab({ url: '/pages/history/index' }) }
 
-  const handleViewDetail = () => {
-    Taro.navigateTo({
-      url: '/pages/result-detail/index'
-    })
-  }
-
-  const handleViewHistory = () => {
-    Taro.switchTab({
-      url: '/pages/history/index'
-    })
-  }
-
-  if (!result) {
-    return null
-  }
+  if (!result) return null
 
   const statusBarHeight = Taro.getSystemInfoSync().statusBarHeight || 44
   const navBarHeight = statusBarHeight + 44
 
   return (
     <View className="min-h-screen bg-slate-50">
-      {/* 自定义导航栏 */}
-      <BackHomeNavBar title={t.result.skinScore} />
-
-      {/* 导航栏占位 */}
+      <BackHomeNavBar title={lang === 'en' ? 'Analysis Result' : '检测结果'} />
       <View style={{ height: `${navBarHeight}px` }} />
 
       <ScrollView scrollY className="h-screen" style={{ height: `calc(100vh - ${navBarHeight}px)` }}>
         <View className="p-4">
-          {/* 综合评分 */}
           <OverallScore score={overallScore} rating={scoreRating} />
 
-          {/* 皮肤类型和图片 */}
+          {/* 皮肤类型 */}
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <View className="flex items-center gap-4">
               {imagePath && (
-                <Image
-                  src={imagePath}
-                  mode="aspectFill"
-                  className="w-24 h-24 rounded-xl"
-                />
+                <Image src={imagePath} mode="aspectFill" className="w-24 h-24 rounded-xl" />
               )}
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-2 block">{t.result.skinType}</Text>
@@ -126,81 +93,56 @@ export default function ResultPage() {
             </View>
           </View>
 
-          {/* 五维雷达图 */}
+          {/* 雷达图 */}
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <View className="flex items-center justify-between mb-4">
               <Text className="text-lg font-semibold text-gray-800 block">{t.result.radarTitle}</Text>
-              <Text className="text-sm text-gray-500 block">{t.result.skinScore}</Text>
+              <Text className="text-sm text-gray-500 block">
+                {lang === 'en' ? 'Deep learning analysis' : '基于深度学习模型分析'}
+              </Text>
             </View>
             <RadarChart data={getRadarData()} width={280} height={280} />
             <View className="mt-4 text-center">
               <Text className="text-sm text-gray-500 block">
-                您的肌肤综合指数为 <Text className="font-bold text-blue-700">{overallScore}分</Text>
+                {lang === 'en'
+                  ? <>Overall score: <Text className="font-bold text-blue-700">{overallScore}</Text></>
+                  : <>您的肌肤综合指数为 <Text className="font-bold text-blue-700">{overallScore}分</Text></>
+                }
               </Text>
             </View>
           </View>
 
-          {/* 五大指标详情 */}
+          {/* 五大指标 */}
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-4 block">五大指标详情</Text>
+            <Text className="text-lg font-semibold text-gray-800 mb-4 block">
+              {lang === 'en' ? 'Skin Metrics' : '五大指标详情'}
+            </Text>
             <View className="space-y-3">
-              <View className="flex items-center justify-between">
-                <View className="flex items-center gap-2">
-                  <View className="w-3 h-3 rounded-full bg-blue-500" />
-                  <Text className="text-sm text-gray-700 block">水分</Text>
+              {[
+                { label: t.result.moisture, val: result.moisture, color: 'blue' },
+                { label: lang === 'en' ? 'Oil Control' : t.result.oiliness, val: 100 - result.oiliness, color: 'green' },
+                { label: lang === 'en' ? 'Calm' : t.result.sensitivity, val: 100 - result.sensitivity, color: 'yellow' },
+                { label: lang === 'en' ? 'Acne Control' : t.result.acne, val: 100 - (result.acne || 0), color: 'red' },
+                { label: lang === 'en' ? 'Anti-wrinkle' : t.result.wrinkles, val: 100 - (result.wrinkles || 0), color: 'purple' },
+              ].map(({ label, val, color }) => (
+                <View key={label} className="flex items-center justify-between">
+                  <View className="flex items-center gap-2">
+                    <View className={`w-3 h-3 rounded-full bg-${color}-500`} />
+                    <Text className="text-sm text-gray-700 block">{label}</Text>
+                  </View>
+                  <View className="flex items-center gap-2">
+                    <Text className={`text-2xl font-bold text-${color}-500 block`}>{val}</Text>
+                    <Text className="text-xs text-gray-500 block">{lang === 'en' ? 'pts' : t.history.scoreUnit}</Text>
+                  </View>
                 </View>
-                <View className="flex items-center gap-2">
-                  <Text className="text-2xl font-bold text-blue-500 block">{result.moisture}</Text>
-                  <Text className="text-xs text-gray-500 block">分</Text>
-                </View>
-              </View>
-              <View className="flex items-center justify-between">
-                <View className="flex items-center gap-2">
-                  <View className="w-3 h-3 rounded-full bg-green-500" />
-                  <Text className="text-sm text-gray-700 block">{t.result.oiliness}</Text>
-                </View>
-                <View className="flex items-center gap-2">
-                  <Text className="text-2xl font-bold text-green-500 block">{100 - result.oiliness}</Text>
-                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
-                </View>
-              </View>
-              <View className="flex items-center justify-between">
-                <View className="flex items-center gap-2">
-                  <View className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <Text className="text-sm text-gray-700 block">{t.result.sensitivity}</Text>
-                </View>
-                <View className="flex items-center gap-2">
-                  <Text className="text-2xl font-bold text-yellow-500 block">{100 - result.sensitivity}</Text>
-                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
-                </View>
-              </View>
-              <View className="flex items-center justify-between">
-                <View className="flex items-center gap-2">
-                  <View className="w-3 h-3 rounded-full bg-red-500" />
-                  <Text className="text-sm text-gray-700 block">{t.result.acne}</Text>
-                </View>
-                <View className="flex items-center gap-2">
-                  <Text className="text-2xl font-bold text-red-500 block">{100 - (result.acne || 0)}</Text>
-                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
-                </View>
-              </View>
-              <View className="flex items-center justify-between">
-                <View className="flex items-center gap-2">
-                  <View className="w-3 h-3 rounded-full bg-purple-500" />
-                  <Text className="text-sm text-gray-700 block">{t.result.wrinkles}</Text>
-                </View>
-                <View className="flex items-center gap-2">
-                  <Text className="text-2xl font-bold text-purple-500 block">{100 - (result.wrinkles || 0)}</Text>
-                  <Text className="text-xs text-gray-500 block">分</Text>
-                </View>
-              </View>
+              ))}
             </View>
           </View>
 
           {/* 主要问题 */}
           {result.concerns && result.concerns.length > 0 && (
             <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
-              <Text className="text-lg font-semibold text-gray-800 mb-3 block">主要问题</Text>
+              <Text className="text-lg font-semibold text-gray-800 mb-3 block">{t.result.concerns}</Text>
               <View className="flex flex-wrap gap-2">
                 {result.concerns.map((concern, index) => (
                   <View key={index} className="inline-flex items-center px-3 py-1.5 rounded-full bg-amber-100">
@@ -213,28 +155,17 @@ export default function ResultPage() {
 
           {/* 操作按钮 */}
           <View className="space-y-3 mb-8">
-            <Button
-              onClick={handleViewDetail}
-              className="w-full bg-blue-700 text-white rounded-full py-4 font-medium"
-            >
-              下一步
+            <Button onClick={handleViewDetail} className="w-full bg-blue-700 text-white rounded-full py-4 font-medium">
+              {lang === 'en' ? 'Next' : '下一步'}
             </Button>
-            <Text className="text-sm text-gray-500 text-center block">查看详细报告</Text>
-
+            <Text className="text-sm text-gray-500 text-center block">{t.result.viewDetail}</Text>
             <View className="flex gap-3">
-              <Button
-                onClick={handleViewHistory}
-                className="w-full bg-white text-gray-700 border-2 border-gray-200 rounded-full py-3"
-              >
-                历史记录
+              <Button onClick={handleViewHistory} className="w-full bg-white text-gray-700 border-2 border-gray-200 rounded-full py-3">
+                {t.tabbar.history}
               </Button>
             </View>
-
-            <Button
-              onClick={handleReDetect}
-              className="w-full bg-white text-gray-700 border-2 border-gray-200 rounded-full py-3"
-            >
-              重新检测
+            <Button onClick={handleReDetect} className="w-full bg-white text-gray-700 border-2 border-gray-200 rounded-full py-3">
+              {t.result.reDetect}
             </Button>
           </View>
         </View>

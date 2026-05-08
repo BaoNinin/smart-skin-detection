@@ -1,7 +1,8 @@
 import { View, Text, Button, Image, Input } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Network } from '@/network'
+import { getOrCreateAnonymousId } from '@/utils/auth'
 import { useI18n } from '@/i18n'
 
 interface UserInfo {
@@ -16,7 +17,7 @@ interface UserInfo {
 }
 
 export default function ProfilePage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
@@ -27,11 +28,6 @@ export default function ProfilePage() {
     loadUserInfo()
     autoLoginIfNot()
   })
-
-  useEffect(() => {
-    loadUserInfo()
-    autoLoginIfNot()
-  }, [])
 
   const autoLoginIfNot = async () => {
     const userId = Taro.getStorageSync('userId')
@@ -55,6 +51,7 @@ export default function ProfilePage() {
           method: 'POST',
           data: {
             code: loginRes.code,
+            anonymousId: getOrCreateAnonymousId(),
             userInfo: null
           }
         })
@@ -107,6 +104,7 @@ export default function ProfilePage() {
         method: 'POST',
         data: {
           code: loginRes.code,
+          anonymousId: getOrCreateAnonymousId(),
           userInfo: null
         }
       })
@@ -125,20 +123,20 @@ export default function ProfilePage() {
           setTempAvatarUrl(userData.avatarUrl || '')
         } else {
           Taro.showToast({
-            title: '登录成功',
+            title: t.profile.loginSuccess,
             icon: 'success'
           })
         }
       } else {
         Taro.showToast({
-          title: res.data.msg || '登录失败',
+          title: res.data.msg || t.profile.loginFail,
           icon: 'none'
         })
       }
     } catch (err) {
       console.error('登录失败:', err)
       Taro.showToast({
-        title: '登录失败',
+        title: t.profile.loginFail,
         icon: 'none'
       })
     } finally {
@@ -168,7 +166,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!tempNickname.trim()) {
       Taro.showToast({
-        title: '请输入昵称',
+        title: t.profile.nicknameRequired,
         icon: 'none'
       })
       return
@@ -190,19 +188,19 @@ export default function ProfilePage() {
         Taro.setStorageSync('userInfo', res.data.data)
         setShowEditProfile(false)
         Taro.showToast({
-          title: '保存成功',
+          title: t.profile.saveSuccess,
           icon: 'success'
         })
       } else {
         Taro.showToast({
-          title: res.data.msg || '保存失败',
+          title: res.data.msg || t.profile.saveFail,
           icon: 'none'
         })
       }
     } catch (err) {
       console.error('保存失败:', err)
       Taro.showToast({
-        title: '保存失败',
+        title: t.profile.saveFail,
         icon: 'none'
       })
     }
@@ -218,15 +216,15 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     Taro.showModal({
-      title: '提示',
-      content: '确定要退出登录吗？',
+      title: t.profile.logoutTitle,
+      content: t.profile.logoutContent,
       success: (res) => {
         if (res.confirm) {
           Taro.removeStorageSync('userId')
           Taro.removeStorageSync('userInfo')
           setUserInfo(null)
           Taro.showToast({
-            title: '已退出登录',
+            title: t.profile.logoutSuccess,
             icon: 'success'
           })
         }
@@ -245,13 +243,13 @@ export default function ProfilePage() {
 
       {/* 内容层 */}
       <View className="relative z-10 min-h-screen p-4 bg-gradient-to-b from-transparent via-slate-900/60 to-slate-900/80 backdrop-blur-sm">
-      <Text className="text-2xl font-bold text-gray-800 mb-6 block">我的</Text>
+      <Text className="text-2xl font-bold text-gray-800 mb-6 block">{t.profile.title}</Text>
 
       {/* 完善信息弹窗 */}
       {showEditProfile && (
         <View className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <View className="bg-white rounded-2xl p-6 w-80 mx-4">
-            <Text className="text-xl font-semibold text-gray-800 mb-6 block text-center">完善个人信息</Text>
+            <Text className="text-xl font-semibold text-gray-800 mb-6 block text-center">{t.profile.editProfile}</Text>
 
             <View className="flex flex-col items-center mb-6">
               <View className="relative">
@@ -275,25 +273,25 @@ export default function ProfilePage() {
                   size="mini"
                   className="flex-1 bg-blue-700 text-white rounded-full border-0"
                 >
-                  微信头像
+                  {t.profile.avatarFromWeChat}
                 </Button>
                 <Button
                   onClick={handleChooseImage}
                   size="mini"
                   className="flex-1 bg-white text-blue-700 border-2 border-rose-400 rounded-full"
                 >
-                  相册选择
+                  {t.profile.avatarFromAlbum}
                 </Button>
               </View>
             </View>
 
             <View className="bg-gray-50 rounded-xl px-4 py-3 mb-4">
-              <Text className="text-sm text-gray-500 block mb-2">昵称</Text>
+              <Text className="text-sm text-gray-500 block mb-2">{t.profile.nicknameLabel}</Text>
               <Input
                 type="nickname"
                 value={tempNickname}
                 onInput={(e) => setTempNickname(e.detail.value)}
-                placeholder="请输入您的昵称"
+                placeholder={t.profile.nicknameInput}
                 className="w-full bg-transparent"
                 maxlength={20}
               />
@@ -304,13 +302,13 @@ export default function ProfilePage() {
                 onClick={() => setShowEditProfile(false)}
                 className="flex-1 bg-gray-200 text-gray-700 rounded-xl"
               >
-                取消
+                {t.profile.cancelBtn}
               </Button>
               <Button
                 onClick={handleSaveProfile}
                 className="flex-1 bg-blue-700 text-white rounded-xl"
               >
-                保存
+                {t.profile.saveBtn}
               </Button>
             </View>
           </View>
@@ -350,7 +348,7 @@ export default function ProfilePage() {
                   )}
                   {!userInfo.phoneNumber && (
                     <Text className="text-sm text-gray-500 block">
-                      开始您的皮肤检测之旅
+                      {t.profile.startJourney}
                     </Text>
                   )}
                 </View>
@@ -360,22 +358,22 @@ export default function ProfilePage() {
                 onClick={handleEditProfile}
                 className="bg-blue-700 text-white rounded-full"
               >
-                编辑
+                {t.profile.editBtn}
               </Button>
             </View>
           </View>
 
           <View className="bg-white rounded-2xl overflow-hidden shadow-sm">
             <View className="p-4 border-b border-gray-100">
-              <Text className="text-base text-gray-800 block">检测次数</Text>
+              <Text className="text-base text-gray-800 block">{t.profile.detectCount}</Text>
               <Text className="text-2xl font-bold text-blue-700 block">
-                {userInfo.detectionCount} 次
+                {userInfo.detectionCount}{t.profile.detectUnit}
               </Text>
             </View>
             <View className="p-4">
-              <Text className="text-base text-gray-800 block">会员等级</Text>
+              <Text className="text-base text-gray-800 block">{t.profile.memberLevel}</Text>
               <Text className="text-sm text-gray-500 block">
-                {userInfo.detectionCount >= 50 ? '高级会员' : '普通会员'}
+                {userInfo.detectionCount >= 50 ? t.profile.premium : t.profile.normal}
               </Text>
             </View>
           </View>
@@ -385,7 +383,7 @@ export default function ProfilePage() {
               onClick={handleLogout}
               className="bg-white text-gray-600 rounded-xl shadow-sm"
             >
-              退出登录
+              {t.profile.logoutBtn}
             </Button>
           </View>
         </>
@@ -394,19 +392,19 @@ export default function ProfilePage() {
           <View className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Text className="text-4xl">👤</Text>
           </View>
-          <Text className="text-lg font-semibold text-gray-800 mb-2 block">未登录</Text>
-          <Text className="text-sm text-gray-500 mb-6 block">登录后可查看检测记录和个性化推荐</Text>
+          <Text className="text-lg font-semibold text-gray-800 mb-2 block">{t.profile.notLoggedIn}</Text>
+          <Text className="text-sm text-gray-500 mb-6 block">{t.profile.loginTip}</Text>
 
           {loading ? (
             <View className="flex items-center justify-center py-3">
-              <Text className="text-base text-gray-600 block">登录中...</Text>
+              <Text className="text-base text-gray-600 block">{t.profile.loggingIn}</Text>
             </View>
           ) : (
             <Button
               onClick={handleLogin}
               className="bg-blue-700 text-white rounded-xl w-full"
             >
-              微信快速登录
+              {t.profile.loginBtn}
             </Button>
           )}
         </View>

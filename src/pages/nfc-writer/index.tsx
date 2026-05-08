@@ -1,3 +1,4 @@
+import { useI18n } from '@/i18n'
 import { View, Text, Button, Input, Textarea, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState } from 'react'

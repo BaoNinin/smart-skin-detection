@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import RadarChart from '@/components/RadarChart'
 import OverallScore from '@/components/OverallScore'
 import BackHomeNavBar from '@/components/BackHomeNavBar'
+import { calculateSkinScore } from '@/utils/skin'
 
 interface HistoryRecord {
   id: number
@@ -57,13 +58,7 @@ export default function HistoryDetailPage() {
   }
 
   const calculateScore = (r: HistoryRecord) => {
-    const scores = [r.moisture, 100 - r.oiliness, 100 - r.sensitivity]
-    if (r.acne) scores.push(100 - r.acne)
-    if (r.wrinkles) scores.push(100 - r.wrinkles)
-    if (r.spots) scores.push(100 - r.spots)
-    if (r.pores) scores.push(100 - r.pores)
-    if (r.blackheads) scores.push(100 - r.blackheads)
-    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    return calculateSkinScore(r)
   }
 
   const getScoreRating = (score: number) => {

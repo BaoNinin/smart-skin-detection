@@ -5,6 +5,8 @@ import { Network } from '@/network'
 import EmptyState from '@/components/EmptyState'
 import { SkeletonListItem } from '@/components/Skeleton'
 import Swipe from '@/components/Swipe'
+import { calculateSkinScore } from '@/utils/skin'
+import { useI18n } from '@/i18n'
 
 interface HistoryRecord {
   id: number
@@ -27,6 +29,7 @@ type ViewType = 'timeline' | 'calendar' | 'trend'
 type TimeRange = 'all' | '7days' | '30days' | '90days'
 
 export default function HistoryPage() {
+  const { t, lang } = useI18n()
   const [historyList, setHistoryList] = useState<HistoryRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [viewType, setViewType] = useState<ViewType>('timeline')
@@ -63,8 +66,8 @@ export default function HistoryPage() {
     if (!userId) {
       console.warn('用户未登录，跳转到登录页面')
       Taro.showModal({
-        title: '提示',
-        content: '请先登录以查看您的检测记录',
+        title: t.profile.logoutTitle,
+        content: t.history.loginRequired,
         showCancel: false,
         success: () => {
           Taro.switchTab({ url: '/pages/profile/index' })
@@ -97,7 +100,7 @@ export default function HistoryPage() {
         // 如果是点击刷新按钮，显示成功提示
         if (resetFilters) {
           Taro.showToast({
-            title: `刷新成功，共 ${res.data.data?.length || 0} 条记录`,
+            title: t.history.refreshSuccess(res.data.data?.length || 0),
             icon: 'success',
             duration: 1500
           })
@@ -105,8 +108,8 @@ export default function HistoryPage() {
       } else if (res.data.code === 401) {
         console.error('登录已过期')
         Taro.showModal({
-          title: '提示',
-          content: '登录已过期，请重新登录',
+          title: t.profile.logoutTitle,
+          content: t.history.loginExpired,
           showCancel: false,
           success: () => {
             Taro.switchTab({ url: '/pages/profile/index' })
@@ -115,7 +118,7 @@ export default function HistoryPage() {
       } else {
         console.error('查询失败，错误信息:', res.data.msg)
         Taro.showToast({
-          title: res.data.msg || '加载失败',
+          title: res.data.msg || t.history.loadFail,
           icon: 'none'
         })
       }
@@ -126,7 +129,7 @@ export default function HistoryPage() {
       if (retryCount === 0) {
         console.log('首次加载失败，尝试重试...')
         Taro.showToast({
-          title: '加载失败，正在重试...',
+          title: t.history.retrying,
           icon: 'none',
           duration: 1500
         })
@@ -135,7 +138,7 @@ export default function HistoryPage() {
       } else {
         console.error('重试失败，不再重试')
         Taro.showToast({
-          title: '加载失败，请检查网络',
+          title: t.history.networkError,
           icon: 'none'
         })
       }
@@ -160,13 +163,7 @@ export default function HistoryPage() {
   }
 
   const calculateScore = (record: HistoryRecord) => {
-    const scores = [record.moisture, 100 - record.oiliness, 100 - record.sensitivity]
-    if (record.acne) scores.push(100 - record.acne)
-    if (record.wrinkles) scores.push(100 - record.wrinkles)
-    if (record.spots) scores.push(100 - record.spots)
-    if (record.pores) scores.push(100 - record.pores)
-    if (record.blackheads) scores.push(100 - record.blackheads)
-    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    return calculateSkinScore(record)
   }
 
   // 根据时间范围过滤记录
@@ -213,7 +210,7 @@ export default function HistoryPage() {
       setSelectedRecords([...selectedRecords, record])
     } else {
       Taro.showToast({
-        title: '最多选择2条记录进行对比',
+        title: t.history.compareMax,
         icon: 'none'
       })
     }
@@ -234,7 +231,7 @@ export default function HistoryPage() {
       })
     } else {
       Taro.showToast({
-        title: '请选择2条记录进行对比',
+        title: t.history.compareSelect,
         icon: 'none'
       })
     }
@@ -252,7 +249,7 @@ export default function HistoryPage() {
       data: `#${record.id}`,
       success: () => {
         Taro.showToast({
-          title: '档案编号已复制',
+          title: t.history.copyIdSuccess,
           icon: 'success'
         })
       }
@@ -261,8 +258,8 @@ export default function HistoryPage() {
 
   const handleDelete = (record: HistoryRecord) => {
     Taro.showModal({
-      title: '确认删除',
-      content: `确定要删除档案 #${record.id} 吗？`,
+      title: t.history.deleteTitle,
+      content: t.history.deleteContent(record.id),
       success: (modalRes) => {
         if (modalRes.confirm) {
           Network.request({
@@ -271,19 +268,19 @@ export default function HistoryPage() {
           }).then((res) => {
             if (res.data.code === 200) {
               Taro.showToast({
-                title: '删除成功',
+                title: t.history.deleteSuccess,
                 icon: 'success'
               })
               loadHistory(0, false) // 删除记录后刷新，不重置筛选条件
             } else {
               Taro.showToast({
-                title: '删除失败',
+                title: t.history.deleteFail,
                 icon: 'none'
               })
             }
           }).catch(() => {
             Taro.showToast({
-              title: '删除失败',
+              title: t.history.deleteFail,
               icon: 'none'
             })
           })
@@ -301,13 +298,13 @@ export default function HistoryPage() {
     const records = getFilteredRecords()
     if (records.length === 0) {
       Taro.showToast({
-        title: '暂无数据可导出',
+        title: t.history.noDataExport,
         icon: 'none'
       })
       return
     }
 
-    Taro.showLoading({ title: '生成报告中...' })
+    Taro.showLoading({ title: t.history.exportLoading })
 
     try {
       // 创建 canvas
@@ -325,12 +322,12 @@ export default function HistoryPage() {
       // 绘制标题
       ctx.fillStyle = '#333333'
       ctx.font = 'bold 32px sans-serif'
-      ctx.fillText('皮肤检测报告', 200, 60)
+      ctx.fillText(t.history.canvasReportTitle, 200, 60)
 
       // 绘制日期
       ctx.fillStyle = '#666666'
       ctx.font = '20px sans-serif'
-      ctx.fillText(`生成时间: ${formatDate(new Date().toISOString())}`, 40, 100)
+      ctx.fillText(t.history.canvasGeneratedAt(formatDate(new Date().toISOString())), 40, 100)
 
       // 绘制统计数据
       const latestRecord = records[0]
@@ -338,21 +335,21 @@ export default function HistoryPage() {
       
       ctx.fillStyle = '#333333'
       ctx.font = 'bold 24px sans-serif'
-      ctx.fillText('最新检测结果', 40, 160)
+      ctx.fillText(t.history.canvasLatestResult, 40, 160)
       
       ctx.fillStyle = '#666666'
       ctx.font = '20px sans-serif'
-      ctx.fillText(`皮肤类型: ${latestRecord.skin_type}`, 40, 200)
-      ctx.fillText(`综合评分: ${score}分`, 40, 240)
-      ctx.fillText(`水分: ${latestRecord.moisture}%`, 40, 280)
-      ctx.fillText(`油性: ${latestRecord.oiliness}%`, 200, 280)
-      ctx.fillText(`敏感度: ${latestRecord.sensitivity}%`, 360, 280)
+      ctx.fillText(t.history.canvasSkinType(latestRecord.skin_type), 40, 200)
+      ctx.fillText(t.history.canvasScore(score), 40, 240)
+      ctx.fillText(t.history.canvasMoisture(latestRecord.moisture), 40, 280)
+      ctx.fillText(t.history.canvasOiliness(latestRecord.oiliness), 200, 280)
+      ctx.fillText(t.history.canvasSensitivity(latestRecord.sensitivity), 360, 280)
 
       // 绘制历史趋势
       if (records.length > 1) {
         ctx.fillStyle = '#333333'
         ctx.font = 'bold 24px sans-serif'
-        ctx.fillText('历史趋势', 40, 340)
+        ctx.fillText(t.history.canvasHistoryTrend, 40, 340)
 
         const chartHeight = 200
         const chartWidth = 520
@@ -388,16 +385,11 @@ export default function HistoryPage() {
         ctx.fillRect(chartX, chartY - 40, 20, 20)
         ctx.fillStyle = '#666666'
         ctx.font = '18px sans-serif'
-        ctx.fillText('水分', chartX + 30, chartY - 25)
+        ctx.fillText(t.history.canvasMoistureLabel, chartX + 30, chartY - 25)
       }
 
-      // 生成图片（微信小程序用 toTempFilePath，不是 toDataURL）
-      const tempFilePath = await new Promise<string>((resolve, reject) => {
-        (canvas as any).toTempFilePath({
-          success: (res: any) => resolve(res.tempFilePath),
-          fail: reject,
-        })
-      })
+      // 生成图片
+      const tempFilePath = (canvas as any).toDataURL('image/png')
 
       // 保存到相册
       await Taro.saveImageToPhotosAlbum({
@@ -406,14 +398,14 @@ export default function HistoryPage() {
 
       Taro.hideLoading()
       Taro.showToast({
-        title: '报告已保存到相册',
+        title: t.history.exportSuccess,
         icon: 'success'
       })
     } catch (err) {
       console.error('导出报告失败:', err)
       Taro.hideLoading()
       Taro.showToast({
-        title: '导出失败',
+        title: t.history.exportFail,
         icon: 'none'
       })
     }
@@ -424,7 +416,7 @@ export default function HistoryPage() {
     const records = getFilteredRecords()
     if (records.length === 0) {
       Taro.showToast({
-        title: '暂无数据可分享',
+        title: t.history.noDataShare,
         icon: 'none'
       })
       return
@@ -434,7 +426,7 @@ export default function HistoryPage() {
     const score = calculateScore(latestRecord)
 
     // 生成分享图片
-    Taro.showLoading({ title: '生成分享图片...' })
+    Taro.showLoading({ title: t.history.shareLoading })
 
     try {
       const canvas = Taro.createOffscreenCanvas({
@@ -454,7 +446,7 @@ export default function HistoryPage() {
       // 绘制标题
       ctx.fillStyle = '#333333'
       ctx.font = 'bold 36px sans-serif'
-      ctx.fillText('我的皮肤报告', 150, 80)
+      ctx.fillText(t.history.canvasShareTitle, 150, 80)
 
       // 绘制评分
       ctx.fillStyle = '#FF6B6B'
@@ -468,27 +460,22 @@ export default function HistoryPage() {
       // 绘制皮肤类型
       ctx.fillStyle = '#333333'
       ctx.font = '24px sans-serif'
-      ctx.fillText(`皮肤类型: ${latestRecord.skin_type}`, 100, 280)
+      ctx.fillText(t.history.canvasShareSkinType(latestRecord.skin_type), 100, 280)
 
       // 绘制指标
       ctx.fillStyle = '#666666'
       ctx.font = '20px sans-serif'
-      ctx.fillText(`水分: ${latestRecord.moisture}%`, 100, 330)
-      ctx.fillText(`油性: ${latestRecord.oiliness}%`, 100, 370)
-      ctx.fillText(`敏感度: ${latestRecord.sensitivity}%`, 100, 410)
+      ctx.fillText(t.history.canvasShareMoisture(latestRecord.moisture), 100, 330)
+      ctx.fillText(t.history.canvasShareOiliness(latestRecord.oiliness), 100, 370)
+      ctx.fillText(t.history.canvasShareSensitivity(latestRecord.sensitivity), 100, 410)
 
       // 绘制二维码提示
       ctx.fillStyle = '#999999'
       ctx.font = '18px sans-serif'
-      ctx.fillText('扫码查看详细报告', 140, 500)
+      ctx.fillText(t.history.canvasShareQrTip, 140, 500)
 
-      // 生成图片（微信小程序用 toTempFilePath）
-      const tempFilePath = await new Promise<string>((resolve, reject) => {
-        (canvas as any).toTempFilePath({
-          success: (res: any) => resolve(res.tempFilePath),
-          fail: reject,
-        })
-      })
+      // 生成图片
+      const tempFilePath = (canvas as any).toDataURL('image/png')
 
       // 保存到相册
       await Taro.saveImageToPhotosAlbum({
@@ -497,15 +484,15 @@ export default function HistoryPage() {
 
       Taro.hideLoading()
       Taro.showModal({
-        title: '分享图片已生成',
-        content: '图片已保存到相册，您可以到朋友圈发布',
+        title: t.history.shareSuccess,
+        content: t.history.shareContent,
         showCancel: false
       })
     } catch (err) {
       console.error('生成分享图片失败:', err)
       Taro.hideLoading()
       Taro.showToast({
-        title: '生成失败',
+        title: t.history.shareFail,
         icon: 'none'
       })
     }
@@ -581,15 +568,15 @@ export default function HistoryPage() {
     <View className="min-h-screen bg-gray-50 flex flex-col">
       <View className="bg-white border-b border-gray-100 p-4 flex items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold text-gray-800 block">肤质档案</Text>
-          <Text className="text-sm text-gray-500 mt-1 block">管理您的皮肤检测记录</Text>
+          <Text className="text-2xl font-bold text-gray-800 block">{t.history.title}</Text>
+          <Text className="text-sm text-gray-500 mt-1 block">{t.history.subtitle}</Text>
         </View>
         {!loading && (
           <View
             onClick={handleRefresh}
             className="bg-slate-50 px-4 py-2 rounded-lg active:bg-slate-100"
           >
-            <Text className="text-sm text-blue-800 block">🔄 刷新</Text>
+            <Text className="text-sm text-blue-800 block">{t.common.refresh}</Text>
           </View>
         )}
       </View>
@@ -600,7 +587,7 @@ export default function HistoryPage() {
           <Text className="text-gray-400 mr-2">🔍</Text>
           <Input
             className="flex-1 text-sm"
-            placeholder="搜索档案ID或皮肤类型"
+            placeholder={t.history.searchPlaceholder}
             value={searchKeyword}
             onInput={(e) => handleSearch(e.detail.value)}
           />
@@ -622,7 +609,7 @@ export default function HistoryPage() {
                 }`}
               >
                 <Text className="text-sm font-medium block">
-                  {range === 'all' ? '全部时间' : range === '7days' ? '最近7天' : range === '30days' ? '最近30天' : '最近90天'}
+                  {range === 'all' ? t.history.timeAll : range === '7days' ? t.history.time7d : range === '30days' ? t.history.time30d : t.history.time90d}
                 </Text>
               </View>
             ))}
@@ -639,7 +626,7 @@ export default function HistoryPage() {
               viewType === 'timeline' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
-            <Text className="text-sm font-medium block">时间轴</Text>
+            <Text className="text-sm font-medium block">{t.history.viewTimeline}</Text>
           </View>
           <View
             onClick={() => setViewType('calendar')}
@@ -647,7 +634,7 @@ export default function HistoryPage() {
               viewType === 'calendar' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
-            <Text className="text-sm font-medium block">日历</Text>
+            <Text className="text-sm font-medium block">{t.history.viewCalendar}</Text>
           </View>
           <View
             onClick={() => setViewType('trend')}
@@ -655,7 +642,7 @@ export default function HistoryPage() {
               viewType === 'trend' ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
-            <Text className="text-sm font-medium block">趋势图</Text>
+            <Text className="text-sm font-medium block">{t.history.viewTrend}</Text>
           </View>
         </View>
       </View>
@@ -668,13 +655,13 @@ export default function HistoryPage() {
               onClick={handleExportReport}
               className="flex-1 py-3 bg-blue-50 border border-blue-200 rounded-xl text-center"
             >
-              <Text className="text-sm font-medium text-blue-600 block">📊 导出报告</Text>
+              <Text className="text-sm font-medium text-blue-600 block">{t.history.exportReport}</Text>
             </View>
             <View
               onClick={handleShareToMoments}
               className="flex-1 py-3 bg-green-50 border border-green-200 rounded-xl text-center"
             >
-              <Text className="text-sm font-medium text-green-600 block">📤 分享</Text>
+              <Text className="text-sm font-medium text-green-600 block">{t.history.shareBtn}</Text>
             </View>
           </View>
         </View>
@@ -684,21 +671,21 @@ export default function HistoryPage() {
         <View className="px-4 py-3 bg-white border-b border-gray-100">
           <View className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
             <Text className="text-sm text-blue-700 block">
-              已选择 {selectedRecords.length} 条记录
+              {t.history.selectedCount(selectedRecords.length)}
             </Text>
             <Button
               onClick={handleCompare}
               size="mini"
               className="bg-blue-500 text-white rounded-full"
             >
-              对比
+              {t.history.compareBtn}
             </Button>
           </View>
         </View>
       )}
 
       <Swipe
-        onSwipeLeft={() => Taro.navigateTo({ url: '/pages/mall/index' })}
+        onSwipeLeft={() => Taro.switchTab({ url: '/pages/mall/index' })}
         onSwipeRight={() => Taro.switchTab({ url: '/pages/landing/index' })}
         threshold={80}
       >
@@ -716,16 +703,16 @@ export default function HistoryPage() {
         {!loading && filteredRecords.length === 0 && (
           <EmptyState
             icon="📋"
-            title={searchKeyword ? '未找到匹配的档案' : '暂无检测记录'}
+            title={searchKeyword ? t.history.searchNoResult : t.history.noRecords}
             description={
               !Taro.getStorageSync('userId')
-                ? '请先登录以查看您的检测记录'
-                : '开始您的第一次皮肤检测吧'
+                ? t.history.loginRequired
+                : t.history.startFirst
             }
             actionText={
               !Taro.getStorageSync('userId')
-                ? '去登录'
-                : '开始检测'
+                ? t.history.goLogin
+                : t.history.startDetect
             }
             onAction={
               !Taro.getStorageSync('userId')
@@ -740,8 +727,8 @@ export default function HistoryPage() {
           <View className="px-4 py-4 space-y-4">
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <View className="flex items-center justify-between mb-4">
-                <Text className="text-lg font-semibold text-gray-800 block">皮肤指标趋势</Text>
-                <Text className="text-sm text-gray-500 block">共 {filteredRecords.length} 次检测</Text>
+                <Text className="text-lg font-semibold text-gray-800 block">{t.history.skinTrend}</Text>
+                <Text className="text-sm text-gray-500 block">{t.history.totalCount(filteredRecords.length)}</Text>
               </View>
 
               <View className="space-y-4">
@@ -750,7 +737,7 @@ export default function HistoryPage() {
                   <View className="flex items-center justify-between mb-2">
                     <View className="flex items-center gap-2">
                       <View className="w-3 h-3 rounded-full bg-blue-500" />
-                      <Text className="text-sm font-medium text-gray-700 block">水分</Text>
+                      <Text className="text-sm font-medium text-gray-700 block">{t.result.moisture}</Text>
                     </View>
                     <Text className="text-sm text-gray-500 block">
                       {filteredRecords[0]?.moisture}% → {filteredRecords[filteredRecords.length - 1]?.moisture}%
@@ -784,7 +771,7 @@ export default function HistoryPage() {
                   <View className="flex items-center justify-between mb-2">
                     <View className="flex items-center gap-2">
                       <View className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <Text className="text-sm font-medium text-gray-700 block">油性</Text>
+                      <Text className="text-sm font-medium text-gray-700 block">{t.result.oiliness}</Text>
                     </View>
                     <Text className="text-sm text-gray-500 block">
                       {filteredRecords[0]?.oiliness}% → {filteredRecords[filteredRecords.length - 1]?.oiliness}%
@@ -818,7 +805,7 @@ export default function HistoryPage() {
                   <View className="flex items-center justify-between mb-2">
                     <View className="flex items-center gap-2">
                       <View className="w-3 h-3 rounded-full bg-slate-500" />
-                      <Text className="text-sm font-medium text-gray-700 block">敏感度</Text>
+                      <Text className="text-sm font-medium text-gray-700 block">{t.result.sensitivity}</Text>
                     </View>
                     <Text className="text-sm text-gray-500 block">
                       {filteredRecords[0]?.sensitivity}% → {filteredRecords[filteredRecords.length - 1]?.sensitivity}%
@@ -851,7 +838,7 @@ export default function HistoryPage() {
 
             {filteredRecords.length > 10 && (
               <View className="bg-gray-100 rounded-xl p-3 text-center">
-                <Text className="text-sm text-gray-500 block">仅显示最近10次检测数据</Text>
+                <Text className="text-sm text-gray-500 block">{t.history.onlyShow10}</Text>
               </View>
             )}
             
@@ -892,28 +879,28 @@ export default function HistoryPage() {
 
                     <View className="flex items-center justify-between mb-3">
                       <View>
-                        <Text className="text-xs text-gray-400 mb-1 block">档案 #{record.id}</Text>
+                        <Text className="text-xs text-gray-400 mb-1 block">{t.history.recordId(record.id)}</Text>
                         <Text className="text-base font-semibold text-gray-800 block">{record.skin_type}</Text>
                         <Text className="text-sm text-gray-500 block">
                           {formatDate(record.created_at)} {formatTime(record.created_at)}
                         </Text>
                       </View>
                       <View className="text-right">
-                        <Text className="text-2xl font-bold text-blue-700 block">{score}分</Text>
+                        <Text className="text-2xl font-bold text-blue-700 block">{score}{t.history.scoreUnit}</Text>
                       </View>
                     </View>
 
                     <View className="flex gap-3 mb-3">
                       <View className="flex-1 bg-gray-50 rounded-lg p-2">
-                        <Text className="text-xs text-gray-500 block mb-1">水分</Text>
+                        <Text className="text-xs text-gray-500 block mb-1">{t.result.moisture}</Text>
                         <Text className="text-base font-bold text-blue-500 block">{record.moisture}%</Text>
                       </View>
                       <View className="flex-1 bg-gray-50 rounded-lg p-2">
-                        <Text className="text-xs text-gray-500 block mb-1">油性</Text>
+                        <Text className="text-xs text-gray-500 block mb-1">{t.result.oiliness}</Text>
                         <Text className="text-base font-bold text-yellow-500 block">{record.oiliness}%</Text>
                       </View>
                       <View className="flex-1 bg-gray-50 rounded-lg p-2">
-                        <Text className="text-xs text-gray-500 block mb-1">敏感度</Text>
+                        <Text className="text-xs text-gray-500 block mb-1">{t.result.sensitivity}</Text>
                         <Text className="text-base font-bold text-blue-800 block">{record.sensitivity}%</Text>
                       </View>
                     </View>
@@ -940,7 +927,7 @@ export default function HistoryPage() {
                         }}
                         className="flex-1 py-2 bg-gray-50 rounded-lg text-center"
                       >
-                        <Text className="text-xs text-gray-600 block">复制ID</Text>
+                        <Text className="text-xs text-gray-600 block">{t.history.copyId}</Text>
                       </View>
                       <View
                         onClick={(e) => {
@@ -949,7 +936,7 @@ export default function HistoryPage() {
                         }}
                         className="flex-1 py-2 bg-red-50 rounded-lg text-center"
                       >
-                        <Text className="text-xs text-red-500 block">删除</Text>
+                        <Text className="text-xs text-red-500 block">{t.history.delete}</Text>
                       </View>
                     </View>
                   </View>
@@ -973,7 +960,7 @@ export default function HistoryPage() {
                   <Text className="text-lg text-gray-600 block">‹</Text>
                 </View>
                 <Text className="text-lg font-semibold text-gray-800 block">
-                  {currentYear}年{currentMonth}月
+                  {t.history.calendarYearMonth(currentYear, currentMonth)}
                 </Text>
                 <View
                   onClick={handleNextMonth}
@@ -1071,12 +1058,12 @@ export default function HistoryPage() {
                       >
                         <View className="flex items-center justify-between mb-2">
                           <View>
-                            <Text className="text-xs text-gray-400 mb-1 block">档案 #{record.id}</Text>
+                            <Text className="text-xs text-gray-400 mb-1 block">{t.history.recordId(record.id)}</Text>
                             <Text className="text-sm font-semibold text-gray-800 block">
                               {record.skin_type}
                             </Text>
                           </View>
-                          <Text className="text-lg font-bold text-blue-700 block">{score}分</Text>
+                          <Text className="text-lg font-bold text-blue-700 block">{score}{t.history.scoreUnit}</Text>
                         </View>
 
                         <Text className="text-xs text-gray-500 block mb-3">
@@ -1085,15 +1072,15 @@ export default function HistoryPage() {
 
                         <View className="flex gap-2">
                           <View className="flex-1 bg-white rounded-lg p-2 text-center">
-                            <Text className="text-xs text-gray-500 block">水分</Text>
+                            <Text className="text-xs text-gray-500 block">{t.result.moisture}</Text>
                             <Text className="text-sm font-bold text-blue-500 block">{record.moisture}%</Text>
                           </View>
                           <View className="flex-1 bg-white rounded-lg p-2 text-center">
-                            <Text className="text-xs text-gray-500 block">油性</Text>
+                            <Text className="text-xs text-gray-500 block">{t.result.oiliness}</Text>
                             <Text className="text-sm font-bold text-yellow-500 block">{record.oiliness}%</Text>
                           </View>
                           <View className="flex-1 bg-white rounded-lg p-2 text-center">
-                            <Text className="text-xs text-gray-500 block">敏感度</Text>
+                            <Text className="text-xs text-gray-500 block">{t.result.sensitivity}</Text>
                             <Text className="text-sm font-bold text-blue-800 block">{record.sensitivity}%</Text>
                           </View>
                         </View>
