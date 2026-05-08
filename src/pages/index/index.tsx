@@ -67,20 +67,13 @@ export default function SkinDetectionPage() {
         quality: 'high',
         success: async (res) => {
           console.log('拍照成功，临时文件路径:', res.tempImagePath)
-          console.log('文件大小:', res.tempFilePaths?.[0] || '未知')
-          
-          // 获取文件信息
-          const fileInfo = await Taro.getFileInfo({
-            filePath: res.tempFilePath
-          })
-          console.log('文件信息:', fileInfo)
-          
-          setCapturedImage(res.tempFilePath)
+
+          setCapturedImage(res.tempImagePath)
           setCameraActive(false)
-          
+
           // 稍微延迟一下再上传，确保文件完全准备好
           setTimeout(() => {
-            analyzeSkin(res.tempFilePath)
+            analyzeSkin(res.tempImagePath)
           }, 500)
         },
         fail: (err) => {

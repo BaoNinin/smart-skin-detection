@@ -7,7 +7,7 @@ const landingBg = '/assets/landing-bg.png'
 const logoImage = '/assets/logo.png'
 
 export default function LandingPage() {
-  const { t, lang, toggle } = useI18n()
+  const { t, toggle } = useI18n()
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   useDidShow(() => {
