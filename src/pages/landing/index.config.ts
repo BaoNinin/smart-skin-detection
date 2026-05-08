@@ -1,11 +1,9 @@
 export default typeof definePageConfig === 'function'
   ? definePageConfig({
-      navigationBarTitleText: '智能皮肤检测',
-      navigationBarBackgroundColor: '#1E40AF',
-      navigationBarTextStyle: 'white'
+      navigationStyle: 'custom',
+      navigationBarTitleText: '智能皮肤检测'
     })
   : {
-      navigationBarTitleText: '智能皮肤检测',
-      navigationBarBackgroundColor: '#1E40AF',
-      navigationBarTextStyle: 'white'
+      navigationStyle: 'custom',
+      navigationBarTitleText: '智能皮肤检测'
     }

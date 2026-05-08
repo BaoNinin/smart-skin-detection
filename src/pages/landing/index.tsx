@@ -60,7 +60,7 @@ export default function LandingPage() {
         onClick={toggle}
         style={{
           position: 'fixed',
-          top: '16px',
+          top: '54px',
           right: '16px',
           zIndex: 100,
           backgroundColor: 'rgba(255,255,255,0.15)',
