@@ -61,7 +61,7 @@ export default function LandingPage() {
         style={{
           position: 'fixed',
           top: '54px',
-          right: '16px',
+          left: '16px',
           zIndex: 100,
           backgroundColor: 'rgba(255,255,255,0.15)',
           borderRadius: '20px',
