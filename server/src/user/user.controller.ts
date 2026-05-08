@@ -8,11 +8,20 @@ export class UserController {
 
   @Post('login')
   async login(@Body() wechatLoginDto: WechatLoginDto) {
-    const result = await this.userService.login(wechatLoginDto)
-    return {
-      code: 200,
-      msg: result.isNewUser ? '登录成功，欢迎新用户' : '登录成功',
-      data: result.userInfo
+    try {
+      const result = await this.userService.login(wechatLoginDto)
+      return {
+        code: 200,
+        msg: result.isNewUser ? '登录成功，欢迎新用户' : '登录成功',
+        data: result.userInfo
+      }
+    } catch (error) {
+      console.error('登录失败:', error)
+      return {
+        code: 500,
+        msg: error.message || '登录失败，请稍后重试',
+        data: null
+      }
     }
   }
 
