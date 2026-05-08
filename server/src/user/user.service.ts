@@ -5,14 +5,40 @@ import * as crypto from 'miniprogram-sm-crypto'
 
 @Injectable()
 export class UserService {
+  private async exchangeWechatCode(code: string): Promise<{ openid: string; session_key: string }> {
+    const appid = process.env.WECHAT_APPID;
+    const secret = process.env.WECHAT_APPSECRET;
+
+    if (!appid || !secret) {
+      throw new Error('微信小程序 AppID 或 AppSecret 未配置');
+    }
+
+    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.errcode) {
+        console.error('微信登录失败:', data);
+        throw new Error(`微信登录失败: ${data.errmsg || '未知错误'} (errcode: ${data.errcode})`);
+      }
+
+      return { openid: data.openid, session_key: data.session_key };
+    } catch (error) {
+      console.error('调用微信 API 失败:', error);
+      throw error;
+    }
+  }
+
   async login(wechatLoginDto: WechatLoginDto): Promise<{ userInfo: UserInfoDto; isNewUser: boolean }> {
     const { code, userInfo } = wechatLoginDto
 
-    const client = getSupabaseClient()
+    // 调用微信 API 用 code 换取真实 openid
+    const { openid } = await this.exchangeWechatCode(code)
+    console.log('微信登录成功，openid:', openid.substring(0, 10) + '...')
 
-    // TODO: 调用微信接口，使用 code 换取 openid
-    // 暂时使用 code 作为 openid（实际需要调用微信 API）
-    const openid = `openid_${code}`
+    const client = getSupabaseClient()
 
     // 查询用户是否已存在
     const { data: existingUsers, error: queryError } = await client
