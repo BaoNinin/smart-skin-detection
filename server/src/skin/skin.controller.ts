@@ -11,19 +11,19 @@ export class SkinController {
   @UseInterceptors(FileInterceptor('image'))
   async analyzeSkin(
     @UploadedFile() file: UploadedFileType,
-    @Body() body: { userId?: number }
+    @Query('userId') userId?: string
   ) {
     if (!file) {
       throw new BadRequestException('未上传图片');
     }
 
-    if (!body.userId) {
+    if (!userId) {
       throw new BadRequestException('缺少用户ID');
     }
 
     console.log('收到皮肤分析请求，文件名:', file.originalname);
     console.log('文件大小:', file.size);
-    console.log('用户ID:', body.userId);
+    console.log('用户ID:', userId);
 
     try {
       const result = await this.skinService.analyzeSkinImage(file);

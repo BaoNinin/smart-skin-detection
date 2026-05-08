@@ -391,8 +391,13 @@ export default function HistoryPage() {
         ctx.fillText('水分', chartX + 30, chartY - 25)
       }
 
-      // 生成图片
-      const tempFilePath = (canvas as any).toDataURL('image/png')
+      // 生成图片（微信小程序用 toTempFilePath，不是 toDataURL）
+      const tempFilePath = await new Promise<string>((resolve, reject) => {
+        (canvas as any).toTempFilePath({
+          success: (res: any) => resolve(res.tempFilePath),
+          fail: reject,
+        })
+      })
 
       // 保存到相册
       await Taro.saveImageToPhotosAlbum({
@@ -477,8 +482,13 @@ export default function HistoryPage() {
       ctx.font = '18px sans-serif'
       ctx.fillText('扫码查看详细报告', 140, 500)
 
-      // 生成图片
-      const tempFilePath = (canvas as any).toDataURL('image/png')
+      // 生成图片（微信小程序用 toTempFilePath）
+      const tempFilePath = await new Promise<string>((resolve, reject) => {
+        (canvas as any).toTempFilePath({
+          success: (res: any) => resolve(res.tempFilePath),
+          fail: reject,
+        })
+      })
 
       // 保存到相册
       await Taro.saveImageToPhotosAlbum({
@@ -688,7 +698,7 @@ export default function HistoryPage() {
       )}
 
       <Swipe
-        onSwipeLeft={() => Taro.switchTab({ url: '/pages/mall/index' })}
+        onSwipeLeft={() => Taro.navigateTo({ url: '/pages/mall/index' })}
         onSwipeRight={() => Taro.switchTab({ url: '/pages/landing/index' })}
         threshold={80}
       >
