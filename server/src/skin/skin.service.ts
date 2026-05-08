@@ -285,6 +285,20 @@ export class SkinService {
     }
   }
 
+  async uploadAnalysisImage(file: UploadedFile): Promise<string | null> {
+    try {
+      const originalName = file.originalname || 'analysis-image.jpg';
+      const sanitizedFileName = originalName.replace(/[^a-zA-Z0-9._-]/g, '-');
+      return await this.cloudStorageService.uploadFile(
+        file,
+        `skin-analysis/${Date.now()}-${sanitizedFileName}`,
+      );
+    } catch (error) {
+      console.warn('上传分析图片失败，继续使用本地图片路径:', error);
+      return null;
+    }
+  }
+
   // 辅助方法：模拟延迟
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
