@@ -11,3 +11,4 @@ key/
 .env.wechat-cloud.txt
 server/.env*
 project.private.config.json
+.swc
