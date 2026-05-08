@@ -7,7 +7,7 @@ import * as crypto from 'miniprogram-sm-crypto'
 export class UserService {
   private async exchangeWechatCode(code: string): Promise<{ openid: string; session_key: string }> {
     const appid = process.env.WECHAT_APPID;
-    const secret = process.env.WECHAT_APP_SECRET;
+    const secret = process.env.WECHAT_APPSECRET;
 
     if (!appid || !secret) {
       throw new Error('微信小程序 AppID 或 AppSecret 未配置');

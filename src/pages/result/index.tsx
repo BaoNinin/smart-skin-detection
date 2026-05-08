@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import RadarChart from '@/components/RadarChart'
 import OverallScore from '@/components/OverallScore'
 import BackHomeNavBar from '@/components/BackHomeNavBar'
+import { useI18n } from '@/i18n'
 
 interface SkinAnalysisResult {
   skinType: string
@@ -20,6 +21,7 @@ interface SkinAnalysisResult {
 }
 
 export default function ResultPage() {
+  const { t } = useI18n()
   const [result, setResult] = useState<SkinAnalysisResult | null>(null)
   const [imagePath, setImagePath] = useState('')
 
@@ -32,7 +34,7 @@ export default function ResultPage() {
       setImagePath(currentImage || '')
     } else {
       Taro.showToast({
-        title: '未找到检测结果',
+        title: t.result.notFound,
         icon: 'none'
       })
       setTimeout(() => {
@@ -53,17 +55,17 @@ export default function ResultPage() {
   }
 
   const overallScore = calculateOverallScore()
-  const scoreRating = overallScore >= 80 ? '优秀' : overallScore >= 60 ? '良好' : '需改善'
+  const scoreRating = overallScore >= 80 ? t.result.excellent : overallScore >= 60 ? t.result.good : t.result.needsWork
 
   const getRadarData = () => {
     if (!result) return []
 
     return [
-      { name: '水分', value: result.moisture, color: '#3B82F6' },
-      { name: '油性', value: 100 - result.oiliness, color: '#10B981' },
-      { name: '敏感度', value: 100 - result.sensitivity, color: '#F59E0B' },
-      { name: '痘痘', value: 100 - (result.acne || 0), color: '#EF4444' },
-      { name: '皱纹', value: 100 - (result.wrinkles || 0), color: '#8B5CF6' }
+      { name: t.result.moisture, value: result.moisture, color: '#3B82F6' },
+      { name: t.result.oiliness, value: 100 - result.oiliness, color: '#10B981' },
+      { name: t.result.sensitivity, value: 100 - result.sensitivity, color: '#F59E0B' },
+      { name: t.result.acne, value: 100 - (result.acne || 0), color: '#EF4444' },
+      { name: t.result.wrinkles, value: 100 - (result.wrinkles || 0), color: '#8B5CF6' }
     ]
   }
 
@@ -95,7 +97,7 @@ export default function ResultPage() {
   return (
     <View className="min-h-screen bg-slate-50">
       {/* 自定义导航栏 */}
-      <BackHomeNavBar title="检测结果" />
+      <BackHomeNavBar title={t.result.skinScore} />
 
       {/* 导航栏占位 */}
       <View style={{ height: `${navBarHeight}px` }} />
@@ -116,7 +118,7 @@ export default function ResultPage() {
                 />
               )}
               <View className="flex-1">
-                <Text className="text-sm text-gray-500 mb-2 block">皮肤类型</Text>
+                <Text className="text-sm text-gray-500 mb-2 block">{t.result.skinType}</Text>
                 <View className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100">
                   <Text className="text-lg text-blue-800 font-semibold block">{result.skinType}</Text>
                 </View>
@@ -127,8 +129,8 @@ export default function ResultPage() {
           {/* 五维雷达图 */}
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <View className="flex items-center justify-between mb-4">
-              <Text className="text-lg font-semibold text-gray-800 block">五维雷达图</Text>
-              <Text className="text-sm text-gray-500 block">基于深度学习模型分析</Text>
+              <Text className="text-lg font-semibold text-gray-800 block">{t.result.radarTitle}</Text>
+              <Text className="text-sm text-gray-500 block">{t.result.skinScore}</Text>
             </View>
             <RadarChart data={getRadarData()} width={280} height={280} />
             <View className="mt-4 text-center">
@@ -155,37 +157,37 @@ export default function ResultPage() {
               <View className="flex items-center justify-between">
                 <View className="flex items-center gap-2">
                   <View className="w-3 h-3 rounded-full bg-green-500" />
-                  <Text className="text-sm text-gray-700 block">控油</Text>
+                  <Text className="text-sm text-gray-700 block">{t.result.oiliness}</Text>
                 </View>
                 <View className="flex items-center gap-2">
                   <Text className="text-2xl font-bold text-green-500 block">{100 - result.oiliness}</Text>
-                  <Text className="text-xs text-gray-500 block">分</Text>
+                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
                 </View>
               </View>
               <View className="flex items-center justify-between">
                 <View className="flex items-center gap-2">
                   <View className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <Text className="text-sm text-gray-700 block">舒缓</Text>
+                  <Text className="text-sm text-gray-700 block">{t.result.sensitivity}</Text>
                 </View>
                 <View className="flex items-center gap-2">
                   <Text className="text-2xl font-bold text-yellow-500 block">{100 - result.sensitivity}</Text>
-                  <Text className="text-xs text-gray-500 block">分</Text>
+                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
                 </View>
               </View>
               <View className="flex items-center justify-between">
                 <View className="flex items-center gap-2">
                   <View className="w-3 h-3 rounded-full bg-red-500" />
-                  <Text className="text-sm text-gray-700 block">祛痘</Text>
+                  <Text className="text-sm text-gray-700 block">{t.result.acne}</Text>
                 </View>
                 <View className="flex items-center gap-2">
                   <Text className="text-2xl font-bold text-red-500 block">{100 - (result.acne || 0)}</Text>
-                  <Text className="text-xs text-gray-500 block">分</Text>
+                  <Text className="text-xs text-gray-500 block">{t.history.scoreUnit}</Text>
                 </View>
               </View>
               <View className="flex items-center justify-between">
                 <View className="flex items-center gap-2">
                   <View className="w-3 h-3 rounded-full bg-purple-500" />
-                  <Text className="text-sm text-gray-700 block">抗皱</Text>
+                  <Text className="text-sm text-gray-700 block">{t.result.wrinkles}</Text>
                 </View>
                 <View className="flex items-center gap-2">
                   <Text className="text-2xl font-bold text-purple-500 block">{100 - (result.wrinkles || 0)}</Text>

@@ -2,6 +2,7 @@ const appConfig = {
   pages: [
     'pages/landing/index',
     'pages/camera/index',
+    'pages/index/index',
     'pages/analyzing/index',
     'pages/result/index',
     'pages/result-detail/index',

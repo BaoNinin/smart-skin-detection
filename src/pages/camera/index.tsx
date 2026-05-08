@@ -1,18 +1,23 @@
 import { View, Camera, CoverView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { startNFCDiscovery, stopNFCDiscovery, NFCData } from '@/utils/nfc'
+import { useI18n } from '@/i18n'
 
 type FlashMode = 'off' | 'on' | 'torch'
 const FLASH_NEXT: Record<FlashMode, FlashMode> = { off: 'on', on: 'torch', torch: 'off' }
-const FLASH_LABEL: Record<FlashMode, string> = { off: '闪光关', on: '闪光开', torch: '常亮' }
 
 export default function CameraPage() {
+  const { t } = useI18n()
   const isWeapp = Taro.getEnv() === Taro.ENV_TYPE.WEAPP
   const sysInfo = Taro.getSystemInfoSync()
   const statusBarHeight = sysInfo.statusBarHeight || 44
   const screenHeight = sysInfo.screenHeight || 667
   const screenWidth = sysInfo.screenWidth || 375
+
+  const flashLabel = useMemo<Record<FlashMode, string>>(() => ({
+    off: t.camera.flashOff, on: t.camera.flashOn, torch: t.camera.flashTorch
+  }), [t])
 
   const [devicePosition, setDevicePosition] = useState<'front' | 'back'>('front')
   const [flashMode, setFlashMode] = useState<FlashMode>('off')
@@ -220,7 +225,7 @@ export default function CameraPage() {
       },
       fail: (err) => {
         if (err.errMsg && !err.errMsg.includes('cancel')) {
-          Taro.showToast({ title: '获取图片失败', icon: 'none' })
+          Taro.showToast({ title: t.camera.photoError, icon: 'none' })
         }
         setTimeout(() => {
           setCountdown(4)
@@ -268,10 +273,10 @@ export default function CameraPage() {
         <CoverView onClick={() => Taro.navigateBack()}
           style={{ position: 'absolute', top: `${navY}px`, left: '16px', width: '40px', height: '40px', borderRadius: '20px', backgroundColor: 'rgba(0,0,0,0.6)', fontSize: '22px', color: 'white', textAlign: 'center', lineHeight: '40px' }}>‹</CoverView>
 
-        <CoverView style={{ position: 'absolute', top: `${navY + 10}px`, left: `${Math.round(screenWidth / 2) - 40}px`, width: '80px', fontSize: '16px', fontWeight: '600', color: 'white', textAlign: 'center' }}>皮肤检测</CoverView>
+        <CoverView style={{ position: 'absolute', top: `${navY + 10}px`, left: `${Math.round(screenWidth / 2) - 40}px`, width: '80px', fontSize: '16px', fontWeight: '600', color: 'white', textAlign: 'center' }}>{t.camera.scanning}</CoverView>
 
         <CoverView onClick={() => setFlashMode(FLASH_NEXT[flashMode])}
-          style={{ position: 'absolute', top: `${navY}px`, left: `${flashBtnLeft}px`, width: '54px', height: '40px', borderRadius: '20px', backgroundColor: 'rgba(0,0,0,0.6)', fontSize: '11px', color: flashMode !== 'off' ? '#fbbf24' : 'white', textAlign: 'center', lineHeight: '40px' }}>{FLASH_LABEL[flashMode]}</CoverView>
+          style={{ position: 'absolute', top: `${navY}px`, left: `${flashBtnLeft}px`, width: '54px', height: '40px', borderRadius: '20px', backgroundColor: 'rgba(0,0,0,0.6)', fontSize: '11px', color: flashMode !== 'off' ? '#fbbf24' : 'white', textAlign: 'center', lineHeight: '40px' }}>{flashLabel[flashMode]}</CoverView>
 
         {/* 椭圆引导框 */}
         <CoverView style={{
@@ -290,12 +295,12 @@ export default function CameraPage() {
 
         {/* 提示文字 */}
         <CoverView style={{ position: 'absolute', top: `${ovalT + ovalH + 14}px`, left: 0, width: '100%', fontSize: '13px', color: scanning ? '#4ade80' : 'rgba(255,255,255,0.85)', textAlign: 'center' }}>
-          {!cameraReady ? '相机准备中...' : scanning ? '正在识别，请保持面部不动' : '请将面部对准椭圆框'}
+          {!cameraReady ? t.camera.countdownBadge(0).replace('0','...') : scanning ? t.camera.keepStill : t.camera.alignFace}
         </CoverView>
 
         {/* 相册 */}
         <CoverView onClick={pickFromAlbum}
-          style={{ position: 'absolute', top: `${btnTop}px`, left: `${albumLeft}px`, width: '54px', height: '54px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.18)', fontSize: '12px', color: 'white', textAlign: 'center', lineHeight: '54px' }}>相册</CoverView>
+          style={{ position: 'absolute', top: `${btnTop}px`, left: `${albumLeft}px`, width: '54px', height: '54px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.18)', fontSize: '12px', color: 'white', textAlign: 'center', lineHeight: '54px' }}>{t.camera.album}</CoverView>
 
         {/* 手动快门 */}
         <CoverView onClick={doTakePhoto}
@@ -305,14 +310,14 @@ export default function CameraPage() {
 
         {/* 翻转 */}
         <CoverView onClick={toggleCamera}
-          style={{ position: 'absolute', top: `${btnTop}px`, left: `${flipLeft}px`, width: '54px', height: '54px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.18)', fontSize: '12px', color: 'white', textAlign: 'center', lineHeight: '54px' }}>翻转</CoverView>
+          style={{ position: 'absolute', top: `${btnTop}px`, left: `${flipLeft}px`, width: '54px', height: '54px', borderRadius: '14px', backgroundColor: 'rgba(255,255,255,0.18)', fontSize: '12px', color: 'white', textAlign: 'center', lineHeight: '54px' }}>{t.camera.flip}</CoverView>
 
         {/* 冷却弹窗 */}
         {showCoolingModal && (
           <CoverView style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)' }}>
             <CoverView style={{ position: 'absolute', top: `${Math.round(screenHeight * 0.32)}px`, left: `${Math.round((screenWidth - 260) / 2)}px`, width: '260px', backgroundColor: '#fff', borderRadius: '16px', padding: '20px' }}>
-              <CoverView style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', textAlign: 'center', marginBottom: '8px' }}>检测冷却中</CoverView>
-              <CoverView style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>为确保检测准确性，请稍后再试</CoverView>
+              <CoverView style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', textAlign: 'center', marginBottom: '8px' }}>{t.camera.scanning}</CoverView>
+              <CoverView style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>{t.landing.cooldown(String(cooldownDisplay.minutes).padStart(2,'0'), String(cooldownDisplay.seconds).padStart(2,'0'))}</CoverView>
               <CoverView style={{ backgroundColor: '#eff6ff', borderRadius: '12px', padding: '16px', marginBottom: '20px', textAlign: 'center' }}>
                 <CoverView style={{ fontSize: '36px', fontWeight: '700', color: '#1d4ed8' }}>
                   {String(cooldownDisplay.minutes).padStart(2, '0')}:{String(cooldownDisplay.seconds).padStart(2, '0')}

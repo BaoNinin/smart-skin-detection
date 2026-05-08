@@ -121,10 +121,16 @@ export namespace Network {
         })
     }
 
-    export const uploadFile: typeof Taro.uploadFile = option => {
-        return Taro.uploadFile({
-            ...option,
-            url: createUrl(option.url),
+    export const uploadFile = (option: Taro.uploadFile.Option): Promise<Taro.uploadFile.SuccessCallbackResult> => {
+        return new Promise((resolve, reject) => {
+            const uploadTask = Taro.uploadFile({
+                ...option,
+                url: createUrl(option.url),
+                success: resolve,
+                fail: reject,
+            })
+            // 保留 abort 能力
+            ;(resolve as any).task = uploadTask
         })
     }
 

@@ -2,6 +2,7 @@ import { View, Text, Image, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { Network } from '@/network'
+import { useI18n } from '@/i18n'
 
 interface SkinAnalysisResult {
   skinType: string
@@ -20,6 +21,7 @@ interface SkinAnalysisResult {
 type AnalysisStep = 'activating' | 'success' | 'analyzing' | 'processing' | 'preview' | 'completed'
 
 export default function AnalyzingPage() {
+  const { t } = useI18n()
   const [imagePath, setImagePath] = useState('')
   const [currentStep, setCurrentStep] = useState<AnalysisStep>('activating')
   const [analyzing, setAnalyzing] = useState(false)
@@ -117,17 +119,17 @@ export default function AnalyzingPage() {
 
   const steps = scanSuccess
     ? [
-        { icon: '🔌', text: '正在准备分析...', step: 'activating' },
-        { icon: '✅', text: '识别成功', step: 'success' },
-        { icon: '🔬', text: 'AI 正在分析肤质...', step: 'analyzing' },
-        { icon: '⚡', text: '深度分析中...', step: 'processing' },
-        { icon: '📊', text: '生成报告...', step: 'preview' },
-        { icon: '✨', text: '分析完成！', step: 'completed' }
+        { icon: '🔌', text: t.analyzing.stepActivating, step: 'activating' },
+        { icon: '✅', text: t.analyzing.stepComplete, step: 'success' },
+        { icon: '🔬', text: t.analyzing.stepAnalyzing, step: 'analyzing' },
+        { icon: '⚡', text: t.analyzing.stepProcessing, step: 'processing' },
+        { icon: '📊', text: t.analyzing.stepPreviewReady, step: 'preview' },
+        { icon: '✨', text: t.analyzing.stepComplete, step: 'completed' }
       ]
     : [
-        { icon: '🔬', text: 'AI 正在分析肤质...', step: 'analyzing' },
-        { icon: '📊', text: '生成报告...', step: 'preview' },
-        { icon: '✨', text: '分析完成！', step: 'completed' }
+        { icon: '🔬', text: t.analyzing.stepAnalyzing, step: 'analyzing' },
+        { icon: '📊', text: t.analyzing.stepPreviewReady, step: 'preview' },
+        { icon: '✨', text: t.analyzing.stepComplete, step: 'completed' }
       ]
 
   useEffect(() => {
@@ -139,7 +141,7 @@ export default function AnalyzingPage() {
       startAnalysis(decodeURIComponent(params.imagePath), isScanSuccess)
     } else {
       Taro.showToast({
-        title: '图片参数错误',
+        title: t.analyzing.notFound,
         icon: 'none'
       })
       setTimeout(() => {
@@ -207,12 +209,9 @@ export default function AnalyzingPage() {
     try {
       const userId = Taro.getStorageSync('userId')
       const res = await Network.uploadFile({
-        url: '/api/skin/analyze',
+        url: `/api/skin/analyze?userId=${userId}`,
         filePath: path,
         name: 'image',
-        formData: {
-          userId: String(userId)
-        }
       })
 
       const data = JSON.parse(res.data)
@@ -235,7 +234,7 @@ export default function AnalyzingPage() {
         if (!userId) {
           console.warn('=== 用户未登录，无法保存历史记录 ===')
           Taro.showToast({
-            title: '请先登录以保存记录',
+            title: t.analyzing.loginToSave,
             icon: 'none',
             duration: 2000
           })
@@ -278,7 +277,7 @@ export default function AnalyzingPage() {
             if (historyRes.data.code === 200) {
               console.log('=== 历史记录保存成功 ===')
               Taro.showToast({
-                title: '记录已保存',
+                title: t.analyzing.recordSaved,
                 icon: 'success',
                 duration: 1500
               })
@@ -339,7 +338,7 @@ export default function AnalyzingPage() {
         console.log('显示结果预览，开始自动跳转倒计时')
       } else {
         Taro.showToast({
-          title: data.msg || '分析失败',
+          title: data.msg || t.analyzing.analysisFail,
           icon: 'none'
         })
         setTimeout(() => {
@@ -349,7 +348,7 @@ export default function AnalyzingPage() {
     } catch (err) {
       console.error('分析失败:', err)
       Taro.showToast({
-        title: '分析失败',
+        title: t.analyzing.analysisFail,
         icon: 'none'
       })
       setTimeout(() => {
@@ -367,8 +366,8 @@ export default function AnalyzingPage() {
       Taro.navigateBack()
     } else {
       Taro.showModal({
-        title: '提示',
-        content: '分析正在进行中，确定要取消吗？',
+        title: t.analyzing.cancelTitle,
+        content: t.analyzing.cancelContent,
         success: (res) => {
           if (res.confirm) {
             Taro.navigateBack()
@@ -467,7 +466,7 @@ export default function AnalyzingPage() {
               <Text className="text-6xl font-bold text-blue-700 block" style={{ textShadow: '0 0 20px rgba(251, 113, 133, 0.8)' }}>
                 {activationCountdown}
               </Text>
-              <Text className="text-sm text-gray-600 mt-2 block">面部分析中</Text>
+              <Text className="text-sm text-gray-600 mt-2 block">{t.analyzing.stepFaceAnalyzing}</Text>
             </View>
 
             {/* 激活进度条 */}
@@ -557,36 +556,36 @@ export default function AnalyzingPage() {
           <View className="w-full max-w-sm mb-6">
             <View className="bg-white rounded-2xl p-6 shadow-lg border-2 border-rose-100">
               <View className="text-center mb-4">
-                <Text className="text-2xl font-bold text-gray-800 block">分析完成！</Text>
-                <Text className="text-sm text-gray-500 mt-1 block">您的肤质报告已生成</Text>
+                <Text className="text-2xl font-bold text-gray-800 block">{t.analyzing.previewDone}</Text>
+                <Text className="text-sm text-gray-500 mt-1 block">{t.analyzing.previewReportReady}</Text>
               </View>
               
               {/* 关键指标 */}
               <View className="grid grid-cols-3 gap-3 mb-4">
                 <View className="bg-blue-50 rounded-xl p-3 text-center">
-                  <Text className="text-xs text-gray-500 block mb-1">水分</Text>
+                  <Text className="text-xs text-gray-500 block mb-1">{t.analyzing.previewMoisture}</Text>
                   <Text className="text-xl font-bold text-blue-500 block">{previewResult.moisture}%</Text>
                 </View>
                 <View className="bg-yellow-50 rounded-xl p-3 text-center">
-                  <Text className="text-xs text-gray-500 block mb-1">油性</Text>
+                  <Text className="text-xs text-gray-500 block mb-1">{t.analyzing.previewOiliness}</Text>
                   <Text className="text-xl font-bold text-yellow-500 block">{previewResult.oiliness}%</Text>
                 </View>
                 <View className="bg-rose-50 rounded-xl p-3 text-center">
-                  <Text className="text-xs text-gray-500 block mb-1">敏感度</Text>
+                  <Text className="text-xs text-gray-500 block mb-1">{t.analyzing.previewSensitivity}</Text>
                   <Text className="text-xl font-bold text-blue-800 block">{previewResult.sensitivity}%</Text>
                 </View>
               </View>
               
               {/* 皮肤类型 */}
               <View className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-4 mb-4">
-                <Text className="text-xs text-gray-500 block mb-1">皮肤类型</Text>
+                <Text className="text-xs text-gray-500 block mb-1">{t.analyzing.previewSkinType}</Text>
                 <Text className="text-lg font-bold text-blue-800 block">{previewResult.skinType}</Text>
               </View>
               
               {/* 主要问题 */}
               {previewResult.concerns && previewResult.concerns.length > 0 && (
                 <View className="mb-4">
-                  <Text className="text-xs text-gray-500 block mb-2">主要问题</Text>
+                  <Text className="text-xs text-gray-500 block mb-2">{t.analyzing.previewConcerns}</Text>
                   <View className="flex flex-wrap gap-2">
                     {previewResult.concerns.slice(0, 3).map((concern, idx) => (
                       <View key={idx} className="px-3 py-1 bg-amber-100 rounded-full">
@@ -600,7 +599,7 @@ export default function AnalyzingPage() {
               {/* 自动跳转倒计时 */}
               <View className="text-center">
                 <Text className="text-sm text-gray-500 block">
-                  {autoJumpCountdown} 秒后自动跳转
+                  {t.analyzing.autoJump(autoJumpCountdown)}
                 </Text>
               </View>
             </View>
@@ -624,14 +623,14 @@ export default function AnalyzingPage() {
         {/* 预计时间 */}
         <Text className="text-sm text-gray-500 text-center block">
           {currentStep === 'activating'
-            ? '准备分析中，请稍候...'
+            ? t.analyzing.stepActivating
             : currentStep === 'analyzing'
-            ? 'AI分析中，请稍候...'
+            ? t.analyzing.stepAnalyzing
             : currentStep === 'processing'
-            ? '深度分析中，请稍候...'
+            ? t.analyzing.stepProcessing
             : currentStep === 'preview'
-            ? '报告已生成'
-            : '分析完成'}
+            ? t.analyzing.stepPreviewReady
+            : t.analyzing.stepComplete}
         </Text>
       </View>
 
@@ -643,13 +642,13 @@ export default function AnalyzingPage() {
               onClick={handleGoToResult}
               className="flex-1 bg-blue-700 text-white rounded-full py-3 font-medium"
             >
-              查看报告
+              {t.analyzing.viewReport}
             </Button>
             <Button
               onClick={handleImmediateJump}
               className="flex-1 bg-white text-blue-700 border-2 border-blue-700 rounded-full py-3 font-medium"
             >
-              立即跳转
+              {t.analyzing.jumpNow}
             </Button>
           </View>
         ) : (
@@ -657,7 +656,7 @@ export default function AnalyzingPage() {
             onClick={handleCancel}
             className="w-full bg-white text-gray-600 border-2 border-gray-200 rounded-full py-3"
           >
-            取消
+            {t.analyzing.cancelBtn}
           </Button>
         )}
       </View>

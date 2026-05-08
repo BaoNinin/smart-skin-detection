@@ -7,8 +7,11 @@ const landingBg = '/assets/landing-bg.png'
 const logoImage = '/assets/logo.png'
 
 export default function LandingPage() {
-  const { t, lang, toggle } = useI18n()
+  const { t, toggle } = useI18n()
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const statusBarHeight = Taro.getSystemInfoSync().statusBarHeight || 44
+  const navBarHeight = 44
+  const topOffset = statusBarHeight + navBarHeight
 
   useDidShow(() => {
     syncTabBar(t)
@@ -60,8 +63,8 @@ export default function LandingPage() {
         onClick={toggle}
         style={{
           position: 'fixed',
-          top: '54px',
-          right: '16px',
+          top: `${topOffset}px`,
+          left: '16px',
           zIndex: 100,
           backgroundColor: 'rgba(255,255,255,0.15)',
           borderRadius: '20px',

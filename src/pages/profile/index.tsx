@@ -2,6 +2,7 @@ import { View, Text, Button, Image, Input } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { Network } from '@/network'
+import { useI18n } from '@/i18n'
 
 interface UserInfo {
   id: number
@@ -15,6 +16,7 @@ interface UserInfo {
 }
 
 export default function ProfilePage() {
+  const { t } = useI18n()
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [showEditProfile, setShowEditProfile] = useState(false)
