@@ -21,6 +21,20 @@ export class AppController {
     };
   }
 
+  // 版本检查：每次推送递增版本号，用于确认云端是否部署了最新代码
+  @Get('version')
+  getVersion(): { status: string; data: any } {
+    return {
+      status: 'success',
+      data: {
+        version: 'v9-native-https',
+        commit: '5394beb',
+        loginMethod: 'node-native-https',
+        deployedAt: new Date().toISOString(),
+      },
+    };
+  }
+
   @Get('config-check')
   getConfigCheck(): { status: string; data: any } {
     return {
