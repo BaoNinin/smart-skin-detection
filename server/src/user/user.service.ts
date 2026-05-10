@@ -3,6 +3,7 @@ import { getSupabaseClient } from '../storage/database/supabase-client'
 import { WechatLoginDto, PhoneNumberLoginDto, UserInfoDto, UpdateUserInfoDto } from './user.types'
 import * as crypto from 'miniprogram-sm-crypto'
 import axios from 'axios'
+import https from 'https'
 
 @Injectable()
 export class UserService {
@@ -17,7 +18,9 @@ export class UserService {
     const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
 
     try {
-      const response = await axios.get(url);
+      const response = await axios.get(url, {
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+      });
       const data = response.data;
 
       if (data.errcode) {
