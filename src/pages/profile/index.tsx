@@ -2,7 +2,7 @@ import { View, Text, Button, Image, Input } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import { Network } from '@/network'
-import { getOrCreateAnonymousId } from '@/utils/auth'
+
 import { useI18n } from '@/i18n'
 
 interface UserInfo {
@@ -51,7 +51,6 @@ export default function ProfilePage() {
           method: 'POST',
           data: {
             code: loginRes.code,
-            anonymousId: getOrCreateAnonymousId(),
             userInfo: null
           }
         })
@@ -104,10 +103,11 @@ export default function ProfilePage() {
         method: 'POST',
         data: {
           code: loginRes.code,
-          anonymousId: getOrCreateAnonymousId(),
           userInfo: null
         }
       })
+
+      console.log('登录响应:', JSON.stringify(res.data))
 
       if (res.data.code === 200) {
         const userData = res.data.data
@@ -134,7 +134,7 @@ export default function ProfilePage() {
         })
       }
     } catch (err) {
-      console.error('登录失败:', err)
+      console.error('登录失败:', JSON.stringify(err))
       Taro.showToast({
         title: t.profile.loginFail,
         icon: 'none'

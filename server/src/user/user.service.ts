@@ -2,14 +2,11 @@ import { Injectable } from '@nestjs/common'
 import { getSupabaseClient } from '../storage/database/supabase-client'
 import { WechatLoginDto, PhoneNumberLoginDto, UserInfoDto, UpdateUserInfoDto } from './user.types'
 import * as crypto from 'miniprogram-sm-crypto'
-import axios from 'axios'
-
-// 云托管容器内 CA 证书链可能不完整，需要跳过 SSL 严格验证
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+import * as https from 'https'
 
 @Injectable()
 export class UserService {
-  private async exchangeWechatCode(code: string): Promise<{ openid: string; session_key: string }> {
+  private exchangeWechatCode(code: string): Promise<{ openid: string; session_key: string }> {
     const appid = process.env.WECHAT_APPID;
     const secret = process.env.WECHAT_APPSECRET;
 
@@ -19,20 +16,29 @@ export class UserService {
 
     const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
 
-    try {
-      const response = await axios.get(url);
-      const data = response.data;
-
-      if (data.errcode) {
-        console.error('微信登录失败:', data);
-        throw new Error(`微信登录失败: ${data.errmsg || '未知错误'} (errcode: ${data.errcode})`);
-      }
-
-      return { openid: data.openid, session_key: data.session_key };
-    } catch (error) {
-      console.error('调用微信 API 失败:', error);
-      throw error;
-    }
+    return new Promise((resolve, reject) => {
+      https.get(url, { rejectUnauthorized: false }, (res) => {
+        let body = '';
+        res.on('data', (chunk) => body += chunk);
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            if (data.errcode) {
+              console.error('微信登录失败:', data);
+              reject(new Error(`微信登录失败: ${data.errmsg || '未知错误'} (errcode: ${data.errcode})`));
+            } else {
+              resolve({ openid: data.openid, session_key: data.session_key });
+            }
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }).on('error', (error) => {
+        console.error('调用微信 API 失败:', error);
+        reject(error);
+      });
+    });
+  }
   }
 
   async login(wechatLoginDto: WechatLoginDto): Promise<{ userInfo: UserInfoDto; isNewUser: boolean }> {
