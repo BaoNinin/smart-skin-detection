@@ -12,3 +12,4 @@ key/
 server/.env*
 project.private.config.json
 .swc
+!server/dist/
