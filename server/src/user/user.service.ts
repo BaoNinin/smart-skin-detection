@@ -6,6 +6,7 @@ import * as https from 'https'
 
 @Injectable()
 export class UserService {
+  // 使用 https 模块而非 fetch：云托管环境可能存在 SSL 证书兼容性问题
   private exchangeWechatCode(code: string): Promise<{ openid: string; session_key: string }> {
     const appid = process.env.WECHAT_APPID;
     const secret = process.env.WECHAT_APPSECRET;
@@ -38,7 +39,6 @@ export class UserService {
         reject(error);
       });
     });
-  }
   }
 
   async login(wechatLoginDto: WechatLoginDto): Promise<{ userInfo: UserInfoDto; isNewUser: boolean }> {

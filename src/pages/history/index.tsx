@@ -388,8 +388,13 @@ export default function HistoryPage() {
         ctx.fillText(t.history.canvasMoistureLabel, chartX + 30, chartY - 25)
       }
 
-      // 生成图片
-      const tempFilePath = (canvas as any).toDataURL('image/png')
+      // 生成图片（微信小程序用 toTempFilePath）
+      const tempFilePath = await new Promise<string>((resolve, reject) => {
+        (canvas as any).toTempFilePath({
+          success: (res: any) => resolve(res.tempFilePath),
+          fail: reject,
+        })
+      })
 
       // 保存到相册
       await Taro.saveImageToPhotosAlbum({

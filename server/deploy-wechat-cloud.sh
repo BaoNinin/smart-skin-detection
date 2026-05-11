@@ -58,7 +58,7 @@ tcb run service:deploy \
   --env PORT=80 \
   --env NODE_ENV=production \
   --env WECHAT_APPID=wx8826c7b681ec3c65 \
-  --env WECHAT_APP_SECRET=b5660a490882bbc56b8fcc69d2cb8cd4 \
+  --env WECHAT_APPSECRET=b5660a490882bbc56b8fcc69d2cb8cd4 \
   --env COZE_SUPABASE_URL=https://pacqfzvxkiobtxbjubil.supabase.co \
   --env COZE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhY3FmenZ4a2lvYnR4Ymp1YmlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODM1ODYsImV4cCI6MjA4ODk1OTU4Nn0.CZoSjahWflEy3vhj_Ya9ddYhie9BtmvRxhNaN8JdZs4
 

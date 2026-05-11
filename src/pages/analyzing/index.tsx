@@ -122,12 +122,12 @@ export default function AnalyzingPage() {
         { icon: '🔬', text: lang === 'en' ? 'AI Analyzing...' : 'AI 正在分析肤质...', step: 'analyzing' },
         { icon: '⚡', text: lang === 'en' ? 'Deep Analysis...' : '深度分析中...', step: 'processing' },
         { icon: '📊', text: lang === 'en' ? 'Generating Report...' : '生成报告...', step: 'preview' },
-        { icon: '✨', text: lang === 'en' ? 'Done!' : lang === 'en' ? 'Analysis Complete!' : '分析完成！', step: 'completed' }
+        { icon: '✨', text: lang === 'en' ? 'Done!' : '分析完成！', step: 'completed' }
       ]
     : [
         { icon: '🔬', text: lang === 'en' ? 'AI Analyzing...' : 'AI 正在分析肤质...', step: 'analyzing' },
         { icon: '📊', text: lang === 'en' ? 'Generating Report...' : '生成报告...', step: 'preview' },
-        { icon: '✨', text: lang === 'en' ? 'Done!' : lang === 'en' ? 'Analysis Complete!' : '分析完成！', step: 'completed' }
+        { icon: '✨', text: lang === 'en' ? 'Done!' : '分析完成！', step: 'completed' }
       ]
 
   useEffect(() => {
