@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import { useEffect, useState } from 'react'
+import { useI18n } from '@/i18n'
 
 interface OverallScoreProps {
   score: number
@@ -7,6 +8,7 @@ interface OverallScoreProps {
 }
 
 export default function OverallScore({ score, rating }: OverallScoreProps) {
+  const { t } = useI18n()
   const [displayScore, setDisplayScore] = useState(0)
 
   useEffect(() => {
@@ -45,13 +47,13 @@ export default function OverallScore({ score, rating }: OverallScoreProps) {
     <View className="bg-white rounded-2xl p-6 shadow-sm">
       <View className="flex items-center justify-between mb-4">
         <View className="flex-1">
-          <Text className="text-sm text-gray-500 block mb-1">综合评分</Text>
+          <Text className="text-sm text-gray-500 block mb-1">{t.result.skinScore}</Text>
           <View className="flex items-baseline">
             <View className="flex items-baseline">
               <Text className="text-5xl font-bold mr-2" style={{ color: getScoreColor() }}>
                 {displayScore}
               </Text>
-              <Text className="text-2xl text-gray-600">分</Text>
+              <Text className="text-2xl text-gray-600">{t.result.pts}</Text>
             </View>
           </View>
           <View className="inline-flex items-center px-3 py-1 rounded-full mt-2 bg-gray-100">

@@ -21,7 +21,7 @@ interface SkinAnalysisResult {
 }
 
 export default function ResultDetailPage() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [result, setResult] = useState<SkinAnalysisResult | null>(null)
   const [imagePath, setImagePath] = useState('')
 
@@ -73,7 +73,7 @@ export default function ResultDetailPage() {
           <View className="bg-gradient-to-r from-blue-700 to-blue-800 rounded-2xl p-6 text-white mb-4">
             <Text className="text-2xl font-bold block">{t.history.canvasReportTitle}</Text>
             <Text className="text-sm opacity-90 block mt-2">
-              {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
             </Text>
           </View>
           <OverallScore score={overallScore} rating={scoreRating} />
