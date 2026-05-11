@@ -2,7 +2,7 @@ import { useI18n } from '@/i18n'
 import { View, Text, Button, Input, Textarea, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState } from 'react'
-import { generateNFCWriteData } from '@/utils/nfc'
+import { generateNFCWriteData, writeURLToNFC } from '@/utils/nfc'
 import { Network } from '@/network'
 
 export default function NFCWriterPage() {
@@ -12,6 +12,7 @@ export default function NFCWriterPage() {
   const [generatedData, setGeneratedData] = useState('')
   const [urlScheme, setUrlScheme] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isWriting, setIsWriting] = useState(false)
 
   const handleGenerate = () => {
     const data = generateNFCWriteData({
@@ -62,6 +63,24 @@ export default function NFCWriterPage() {
       })
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleWriteToNFC = async () => {
+    const dataToWrite = urlScheme || generatedData
+    if (!dataToWrite) {
+      Taro.showToast({ title: '请先生成 URL Scheme', icon: 'none' })
+      return
+    }
+
+    setIsWriting(true)
+    try {
+      await writeURLToNFC(dataToWrite)
+    } catch (err: any) {
+      console.error('写入 NFC 失败:', err)
+      Taro.showToast({ title: err.message || '写入失败', icon: 'none' })
+    } finally {
+      setIsWriting(false)
     }
   }
 
@@ -192,9 +211,18 @@ export default function NFCWriterPage() {
                 disabled
               />
             </View>
-            <Button className="w-full bg-green-500" onClick={handleCopy}>
-              复制 URL Scheme
-            </Button>
+            <View className="flex flex-row gap-2">
+              <Button className="flex-1 bg-green-500" onClick={handleCopy}>
+                复制
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 text-white"
+                onClick={handleWriteToNFC}
+                loading={isWriting}
+              >
+                写入 NFC 芯片
+              </Button>
+            </View>
           </View>
         )}
 

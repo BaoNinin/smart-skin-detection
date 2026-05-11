@@ -239,6 +239,61 @@ export function generateNFCWriteData(options: {
 }
 
 /**
+ * 写入 URL 到 NFC 芯片
+ */
+export function writeURLToNFC(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const nfcAdapter = getNFCAdapter()
+    if (!nfcAdapter) {
+      reject(new Error('设备不支持 NFC'))
+      return
+    }
+
+    nfcAdapter.startDiscovery({
+      success: () => {
+        console.log('NFC 写入模式已启动，请将手机靠近 NFC 芯片')
+        Taro.showToast({ title: '请将手机靠近 NFC 芯片', icon: 'none', duration: 3000 })
+      },
+      fail: (err: any) => {
+        reject(new Error('启动 NFC 失败: ' + JSON.stringify(err)))
+      },
+    })
+
+    nfcAdapter.onDiscovered((res: any) => {
+      console.log('发现 NFC 标签，开始写入:', res)
+      Taro.showToast({ title: '发现芯片，正在写入...', icon: 'loading', duration: 2000 })
+
+      try {
+        const ndef = nfcAdapter.getNdef()
+        ndef.write({
+          records: [
+            {
+              type: 'URI',
+              uri: url,
+            },
+          ],
+          success: () => {
+            console.log('NFC 写入成功')
+            stopNFCDiscovery()
+            Taro.showToast({ title: '写入成功！', icon: 'success' })
+            resolve()
+          },
+          fail: (err: any) => {
+            console.error('NFC 写入失败:', err)
+            stopNFCDiscovery()
+            reject(new Error('写入失败: ' + JSON.stringify(err)))
+          },
+        })
+      } catch (err: any) {
+        console.error('NFC 写入异常:', err)
+        stopNFCDiscovery()
+        reject(err)
+      }
+    })
+  })
+}
+
+/**
  * 检查是否由 NFC 启动
  */
 export function checkNFCStartup(): boolean {
