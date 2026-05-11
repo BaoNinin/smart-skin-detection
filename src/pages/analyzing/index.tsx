@@ -206,16 +206,10 @@ export default function AnalyzingPage() {
 
     try {
       const userId = Taro.getStorageSync('userId')
-      const formData: Record<string, string> = {}
-      if (userId) {
-        formData.userId = String(userId)
-      }
-
       const res = await Network.uploadFile({
-        url: '/api/skin/analyze',
+        url: `/api/skin/analyze?userId=${userId}`,
         filePath: path,
         name: 'image',
-        formData
       })
 
       const data = JSON.parse(res.data)
