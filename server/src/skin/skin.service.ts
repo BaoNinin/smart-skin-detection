@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
+import * as https from 'https';
 import { UploadedFile, SkinAnalysisResult } from './skin.types';
 import { ProductService } from './product.service';
 import { HistoryService } from './history.service';
@@ -7,6 +8,28 @@ import { CloudStorageService } from '@/config/cloud-storage.service';
 
 @Injectable()
 export class SkinService {
+  // POST 请求辅助：云托管环境需使用 https 模块代替 fetch
+  private httpsPost(url: string, body: unknown, headers: Record<string, string>): Promise<{ status: number; text: string }> {
+    return new Promise((resolve, reject) => {
+      const u = new URL(url);
+      const data = JSON.stringify(body);
+      const req = https.request({
+        hostname: u.hostname,
+        path: u.pathname + u.search,
+        method: 'POST',
+        headers: { ...headers, 'Content-Length': Buffer.byteLength(data) },
+        rejectUnauthorized: false,
+      }, (res) => {
+        let text = '';
+        res.on('data', (chunk) => text += chunk);
+        res.on('end', () => resolve({ status: res.statusCode || 0, text }));
+      });
+      req.on('error', reject);
+      req.write(data);
+      req.end();
+    });
+  }
+
   constructor(
     private readonly productService: ProductService,
     private readonly historyService: HistoryService,
@@ -168,22 +191,17 @@ export class SkinService {
         content_types: requestBody.messages[0].content.map((c: any) => c.type)
       });
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(requestBody),
+      const { status, text: responseText } = await this.httpsPost(apiUrl, requestBody, {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API 调用失败:', response.status, errorText);
-        throw new Error(`API 调用失败: ${response.status} - ${errorText}`);
+      if (status < 200 || status >= 300) {
+        console.error('API 调用失败:', status, responseText);
+        throw new Error(`API 调用失败: ${status} - ${responseText}`);
       }
 
-      const responseData = await response.json();
+      const responseData = JSON.parse(responseText);
       console.log('豆包模型响应状态:', responseData);
       console.log('API 响应结构:', JSON.stringify({
         has_id: !!responseData.id,
@@ -385,15 +403,14 @@ export class SkinService {
         temperature: 0.1
       };
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify(requestBody),
+      const { status, text: responseText } = await this.httpsPost(apiUrl, requestBody, {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       });
 
-      if (!response.ok) return fallback;
+      if (status < 200 || status >= 300) return fallback;
 
-      const data = await response.json();
+      const data = JSON.parse(responseText);
       const content = data.choices?.[0]?.message?.content || '';
       const jsonMatch = content.match(/\{[\s\S]*?\}/);
       if (!jsonMatch) return fallback;
