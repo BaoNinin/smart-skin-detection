@@ -118,6 +118,16 @@ const zh = {
     saveResult: '💾 保存结果',
     saveSuccess: '结果已保存到历史记录',
     loadError: '加载结果失败',
+    reportTitle: '检测结果',
+    analysisBasis: '基于深度学习模型分析',
+    scoreText: (score: number) => `您的肌肤综合指数为 ${score} 分`,
+    metricsTitle: '五大指标详情',
+    oilControl: '控油',
+    calm: '抗敏',
+    acneControl: '祛痘',
+    antiWrinkle: '抗皱',
+    pts: '分',
+    next: '下一步',
   },
 
   // ─── 历史记录 ─────────────────────────────────────

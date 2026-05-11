@@ -71,7 +71,7 @@ export default function ResultPage() {
 
   return (
     <View className="min-h-screen bg-slate-50">
-      <BackHomeNavBar title={lang === 'en' ? 'Analysis Result' : '检测结果'} />
+      <BackHomeNavBar title={t.result.reportTitle} />
       <View style={{ height: `${navBarHeight}px` }} />
 
       <ScrollView scrollY className="h-screen" style={{ height: `calc(100vh - ${navBarHeight}px)` }}>
@@ -97,33 +97,26 @@ export default function ResultPage() {
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <View className="flex items-center justify-between mb-4">
               <Text className="text-lg font-semibold text-gray-800 block">{t.result.radarTitle}</Text>
-              <Text className="text-sm text-gray-500 block">
-                {lang === 'en' ? 'Deep learning analysis' : '基于深度学习模型分析'}
-              </Text>
+              <Text className="text-sm text-gray-500 block">{t.result.analysisBasis}</Text>
             </View>
             <RadarChart data={getRadarData()} width={280} height={280} />
             <View className="mt-4 text-center">
-              <Text className="text-sm text-gray-500 block">
-                {lang === 'en'
-                  ? <>Overall score: <Text className="font-bold text-blue-700">{overallScore}</Text></>
-                  : <>您的肌肤综合指数为 <Text className="font-bold text-blue-700">{overallScore}分</Text></>
-                }
-              </Text>
+              <Text className="text-sm text-gray-500 block">{t.result.scoreText(overallScore)}</Text>
             </View>
           </View>
 
           {/* 五大指标 */}
           <View className="bg-white rounded-2xl p-4 shadow-sm mb-4">
             <Text className="text-lg font-semibold text-gray-800 mb-4 block">
-              {lang === 'en' ? 'Skin Metrics' : '五大指标详情'}
+              {t.result.metricsTitle}
             </Text>
             <View className="space-y-3">
               {[
                 { label: t.result.moisture, val: result.moisture, color: 'blue' },
-                { label: lang === 'en' ? 'Oil Control' : t.result.oiliness, val: 100 - result.oiliness, color: 'green' },
-                { label: lang === 'en' ? 'Calm' : t.result.sensitivity, val: 100 - result.sensitivity, color: 'yellow' },
-                { label: lang === 'en' ? 'Acne Control' : t.result.acne, val: 100 - (result.acne || 0), color: 'red' },
-                { label: lang === 'en' ? 'Anti-wrinkle' : t.result.wrinkles, val: 100 - (result.wrinkles || 0), color: 'purple' },
+                { label: t.result.oilControl, val: 100 - result.oiliness, color: 'green' },
+                { label: t.result.calm, val: 100 - result.sensitivity, color: 'yellow' },
+                { label: t.result.acneControl, val: 100 - (result.acne || 0), color: 'red' },
+                { label: t.result.antiWrinkle, val: 100 - (result.wrinkles || 0), color: 'purple' },
               ].map(({ label, val, color }) => (
                 <View key={label} className="flex items-center justify-between">
                   <View className="flex items-center gap-2">
@@ -132,7 +125,7 @@ export default function ResultPage() {
                   </View>
                   <View className="flex items-center gap-2">
                     <Text className={`text-2xl font-bold text-${color}-500 block`}>{val}</Text>
-                    <Text className="text-xs text-gray-500 block">{lang === 'en' ? 'pts' : t.history.scoreUnit}</Text>
+                    <Text className="text-xs text-gray-500 block">{t.result.pts}</Text>
                   </View>
                 </View>
               ))}
@@ -156,7 +149,7 @@ export default function ResultPage() {
           {/* 操作按钮 */}
           <View className="space-y-3 mb-8">
             <Button onClick={handleViewDetail} className="w-full bg-blue-700 text-white rounded-full py-4 font-medium">
-              {lang === 'en' ? 'Next' : '下一步'}
+              {t.result.next}
             </Button>
             <Text className="text-sm text-gray-500 text-center block">{t.result.viewDetail}</Text>
             <View className="flex gap-3">

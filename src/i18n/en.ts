@@ -120,6 +120,16 @@ const en: I18nKeys = {
     saveResult: '💾 Save Result',
     saveSuccess: 'Result saved to history',
     loadError: 'Failed to load result',
+    reportTitle: 'Analysis Result',
+    analysisBasis: 'Deep learning analysis',
+    scoreText: (score: number) => `Overall score: ${score}`,
+    metricsTitle: 'Skin Metrics',
+    oilControl: 'Oil Control',
+    calm: 'Calm',
+    acneControl: 'Acne Control',
+    antiWrinkle: 'Anti-wrinkle',
+    pts: 'pts',
+    next: 'Next',
   },
 
   // ─── History ──────────────────────────────────────
