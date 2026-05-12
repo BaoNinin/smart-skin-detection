@@ -1,5 +1,5 @@
 import { View, Text, Button, ScrollView, Input } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { useState, useEffect, useMemo } from 'react'
 import { Network } from '@/network'
 import EmptyState from '@/components/EmptyState'
@@ -45,6 +45,11 @@ export default function HistoryPage() {
   useEffect(() => {
     loadHistory()
   }, [])
+
+  useShareAppMessage(() => ({
+    title: t.history.title,
+    path: '/pages/landing/index',
+  }))
 
   const loadHistory = async (retryCount = 0, resetFilters = false) => {
     setLoading(true)

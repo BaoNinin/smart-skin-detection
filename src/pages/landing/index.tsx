@@ -1,5 +1,5 @@
 import { View, Text, Image } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro, { useDidShow, useShareAppMessage } from '@tarojs/taro'
 import { useState } from 'react'
 import { useI18n, syncTabBar } from '@/i18n'
 
@@ -16,6 +16,11 @@ export default function LandingPage() {
   useDidShow(() => {
     syncTabBar(t)
   })
+
+  useShareAppMessage(() => ({
+    title: t.landing.title,
+    path: '/pages/landing/index',
+  }))
 
   const handleStartDetection = () => {
     const privacyAgreed = Taro.getStorageSync('privacyAgreed')

@@ -1,5 +1,5 @@
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import RadarChart from '@/components/RadarChart'
 import OverallScore from '@/components/OverallScore'
@@ -33,6 +33,11 @@ export default function ResultDetailPage() {
       setImagePath(currentImage || '')
     }
   }, [])
+
+  useShareAppMessage(() => ({
+    title: t.result.viewDetail,
+    path: '/pages/landing/index',
+  }))
 
   const calculateOverallScore = () => {
     if (!result) return 0
