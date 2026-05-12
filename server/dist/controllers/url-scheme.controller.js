@@ -123,7 +123,7 @@ let URLSchemeController = class URLSchemeController {
     async getAccessToken() {
         try {
             const appid = this.configService.get('WECHAT_APPID');
-            const secret = this.configService.get('WECHAT_APP_SECRET');
+            const secret = this.configService.get('WECHAT_APPSECRET');
             if (!appid || !secret) {
                 console.error('微信 AppID 或 AppSecret 未配置');
                 return null;

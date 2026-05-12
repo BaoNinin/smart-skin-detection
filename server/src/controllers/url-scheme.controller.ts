@@ -178,7 +178,7 @@ export class URLSchemeController {
     try {
       // 从环境变量获取 AppID 和 AppSecret
       const appid = this.configService.get<string>('WECHAT_APPID')
-      const secret = this.configService.get<string>('WECHAT_APP_SECRET')
+      const secret = this.configService.get<string>('WECHAT_APPSECRET')
 
       if (!appid || !secret) {
         console.error('微信 AppID 或 AppSecret 未配置')
