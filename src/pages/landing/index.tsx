@@ -187,6 +187,7 @@ export default function LandingPage() {
           </View>
         </View>
       )}
+      <Text className="text-xs text-gray-400 text-center block py-4">{t.common.aiDisclaimer}</Text>
     </View>
   )
 }
