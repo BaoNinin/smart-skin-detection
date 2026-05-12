@@ -14,6 +14,7 @@ const en: I18nKeys = {
     export: '📊 Export Report',
     noData: 'No data',
     langToggle: '中文',
+    aiDisclaimer: 'AI-generated content, for reference only',
   },
 
   // ─── Landing ──────────────────────────────────────

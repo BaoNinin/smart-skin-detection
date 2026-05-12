@@ -12,6 +12,7 @@ const zh = {
     export: '📊 导出报告',
     noData: '暂无数据',
     langToggle: 'EN',
+    aiDisclaimer: '内容由AI生成，仅供参考',
   },
 
   // ─── 首页 ─────────────────────────────────────────

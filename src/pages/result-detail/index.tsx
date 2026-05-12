@@ -155,6 +155,7 @@ export default function ResultDetailPage() {
           </View>
         </View>
       </ScrollView>
+      <Text className="text-xs text-gray-400 text-center block py-4">{t.common.aiDisclaimer}</Text>
     </View>
   )
 }

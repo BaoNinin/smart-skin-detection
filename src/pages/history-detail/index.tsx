@@ -489,6 +489,7 @@ export default function HistoryDetailPage() {
             </View>
           </View>
         </ScrollView>
+        <Text className="text-xs text-gray-400 text-center block py-4">内容由AI生成，仅供参考</Text>
       </View>
     )
   }
@@ -661,6 +662,7 @@ export default function HistoryDetailPage() {
             </View>
           </View>
         </ScrollView>
+        <Text className="text-xs text-gray-400 text-center block py-4">内容由AI生成，仅供参考</Text>
       </View>
     )
   }
