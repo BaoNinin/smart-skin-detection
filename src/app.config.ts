@@ -18,7 +18,8 @@ const appConfig = {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#1E40AF',
     navigationBarTitleText: '智能皮肤检测',
-    navigationBarTextStyle: 'white'
+    navigationBarTextStyle: 'white',
+    enableShareAppMessage: true
   },
   tabBar: {
     color: '#94A3B8',
