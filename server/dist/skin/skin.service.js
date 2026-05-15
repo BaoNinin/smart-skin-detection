@@ -17,7 +17,7 @@ const product_service_1 = require("./product.service");
 const history_service_1 = require("./history.service");
 const cloud_storage_service_1 = require("../config/cloud-storage.service");
 let SkinService = class SkinService {
-    httpsPost(url, body, headers) {
+    httpsPost(url, body, headers, timeoutMs = 45000) {
         return new Promise((resolve, reject) => {
             const u = new URL(url);
             const data = JSON.stringify(body);
@@ -27,10 +27,15 @@ let SkinService = class SkinService {
                 method: 'POST',
                 headers: { ...headers, 'Content-Length': Buffer.byteLength(data) },
                 rejectUnauthorized: false,
+                timeout: timeoutMs,
             }, (res) => {
                 let text = '';
                 res.on('data', (chunk) => text += chunk);
                 res.on('end', () => resolve({ status: res.statusCode || 0, text }));
+            });
+            req.on('timeout', () => {
+                req.destroy();
+                reject(new Error(`API 请求超时 (${timeoutMs}ms)`));
             });
             req.on('error', reject);
             req.write(data);
@@ -205,10 +210,10 @@ let SkinService = class SkinService {
             }
             console.log('响应内容长度:', responseContent.length);
             console.log('响应前 200 字符:', responseContent.substring(0, 200));
-            const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
+            const jsonMatch = responseContent.match(/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/);
             if (!jsonMatch) {
                 console.error('无法从响应中提取 JSON，原始内容:', responseContent);
-                throw new Error('无法解析 LLM 响应为 JSON');
+                throw new Error('AI 返回格式异常，请重试');
             }
             const result = JSON.parse(jsonMatch[0]);
             console.log(`[${imageTimestamp}] === 豆包模型分析结果 ===`);
@@ -366,7 +371,7 @@ let SkinService = class SkinService {
                 return fallback;
             const data = JSON.parse(responseText);
             const content = data.choices?.[0]?.message?.content || '';
-            const jsonMatch = content.match(/\{[\s\S]*?\}/);
+            const jsonMatch = content.match(/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/);
             if (!jsonMatch)
                 return fallback;
             const result = JSON.parse(jsonMatch[0]);

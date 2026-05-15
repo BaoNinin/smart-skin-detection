@@ -9,7 +9,7 @@ import { CloudStorageService } from '@/config/cloud-storage.service';
 @Injectable()
 export class SkinService {
   // POST 请求辅助：云托管环境需使用 https 模块代替 fetch
-  private httpsPost(url: string, body: unknown, headers: Record<string, string>): Promise<{ status: number; text: string }> {
+  private httpsPost(url: string, body: unknown, headers: Record<string, string>, timeoutMs = 45000): Promise<{ status: number; text: string }> {
     return new Promise((resolve, reject) => {
       const u = new URL(url);
       const data = JSON.stringify(body);
@@ -19,10 +19,15 @@ export class SkinService {
         method: 'POST',
         headers: { ...headers, 'Content-Length': Buffer.byteLength(data) },
         rejectUnauthorized: false,
+        timeout: timeoutMs,
       }, (res) => {
         let text = '';
         res.on('data', (chunk) => text += chunk);
         res.on('end', () => resolve({ status: res.statusCode || 0, text }));
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error(`API 请求超时 (${timeoutMs}ms)`));
       });
       req.on('error', reject);
       req.write(data);
@@ -224,10 +229,11 @@ export class SkinService {
       console.log('响应内容长度:', responseContent.length);
       console.log('响应前 200 字符:', responseContent.substring(0, 200));
 
-      const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
+      // 非贪婪匹配第一个完整 JSON 对象
+      const jsonMatch = responseContent.match(/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/);
       if (!jsonMatch) {
         console.error('无法从响应中提取 JSON，原始内容:', responseContent);
-        throw new Error('无法解析 LLM 响应为 JSON');
+        throw new Error('AI 返回格式异常，请重试');
       }
 
       const result = JSON.parse(jsonMatch[0]);
@@ -412,7 +418,7 @@ export class SkinService {
 
       const data = JSON.parse(responseText);
       const content = data.choices?.[0]?.message?.content || '';
-      const jsonMatch = content.match(/\{[\s\S]*?\}/);
+      const jsonMatch = content.match(/\{(?:[^{}]|(?:\{[^{}]*\}))*\}/);
       if (!jsonMatch) return fallback;
 
       const result = JSON.parse(jsonMatch[0]);

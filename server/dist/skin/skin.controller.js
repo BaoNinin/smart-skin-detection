@@ -40,7 +40,17 @@ let SkinController = class SkinController {
         }
         catch (error) {
             console.error('皮肤分析失败:', error);
-            throw error;
+            const message = error.message || '分析失败';
+            if (message.includes('超时')) {
+                return { code: 500, msg: 'AI 服务响应超时，请重试', data: null };
+            }
+            if (message.includes('JSON') || message.includes('格式异常')) {
+                return { code: 500, msg: 'AI 返回格式异常，请重试', data: null };
+            }
+            if (message.includes('ENOTFOUND') || message.includes('ECONNREFUSED')) {
+                return { code: 500, msg: 'AI 服务暂不可用，请稍后重试', data: null };
+            }
+            return { code: 500, msg: '分析失败，请重试', data: null };
         }
     }
     async checkFace(file) {

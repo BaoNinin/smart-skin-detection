@@ -7,6 +7,10 @@ export declare class SkinController {
         code: number;
         msg: string;
         data: import("./skin.types").SkinAnalysisResult;
+    } | {
+        code: number;
+        msg: string;
+        data: null;
     }>;
     checkFace(file: UploadedFileType): Promise<{
         code: number;
