@@ -1,5 +1,5 @@
-# 使用 Node.js 18 Alpine 镜像
-FROM node:18-slim
+# 使用 Node.js 20 Debian 镜像
+FROM node:20-slim
 
 # 设置工作目录
 WORKDIR /app
