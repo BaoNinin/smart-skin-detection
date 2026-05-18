@@ -10,6 +10,7 @@ export interface SkinAnalysisResult {
   pores: number;
   blackheads: number;
   recommendations: string[];
+  imageUrl?: string | null;
 }
 
 export interface UploadedFile {

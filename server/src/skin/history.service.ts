@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '@/user/user.service';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { CloudStorageService } from '@/config/cloud-storage.service';
 
 @Injectable()
 export class HistoryService {
-  constructor(private readonly userService: UserService) {
+  constructor(
+    private readonly userService: UserService,
+    private readonly cloudStorageService: CloudStorageService,
+  ) {
     console.log('HistoryService 初始化完成，使用 Supabase 数据库存储');
   }
 
@@ -27,7 +31,7 @@ export class HistoryService {
       throw error;
     }
 
-    return (data || []).map((r: any) => ({
+    const records = (data || []).map((r: any) => ({
       id: r.id,
       skin_type: r.skin_type,
       concerns: r.concerns || [],
@@ -43,6 +47,21 @@ export class HistoryService {
       image_url: r.image_url || null,
       created_at: r.created_at,
     }));
+
+    // 将 cloud:// fileID 批量转为临时链接（2小时有效期，每次查询时刷新）
+    const fileIDs = records
+      .map((r) => r.image_url)
+      .filter((url): url is string => !!url && url.startsWith('cloud://'));
+    if (fileIDs.length > 0) {
+      const urlMap = await this.cloudStorageService.getTempFileURLs(fileIDs);
+      for (const r of records) {
+        if (r.image_url && urlMap.has(r.image_url)) {
+          r.image_url = urlMap.get(r.image_url)!;
+        }
+      }
+    }
+
+    return records;
   }
 
   async saveHistory(record: {

@@ -1,7 +1,9 @@
 import { UserService } from '@/user/user.service';
+import { CloudStorageService } from '@/config/cloud-storage.service';
 export declare class HistoryService {
     private readonly userService;
-    constructor(userService: UserService);
+    private readonly cloudStorageService;
+    constructor(userService: UserService, cloudStorageService: CloudStorageService);
     getHistory(userId?: number): Promise<{
         id: any;
         skin_type: any;

@@ -13,9 +13,11 @@ exports.HistoryService = void 0;
 const common_1 = require("@nestjs/common");
 const user_service_1 = require("../user/user.service");
 const supabase_client_1 = require("../storage/database/supabase-client");
+const cloud_storage_service_1 = require("../config/cloud-storage.service");
 let HistoryService = class HistoryService {
-    constructor(userService) {
+    constructor(userService, cloudStorageService) {
         this.userService = userService;
+        this.cloudStorageService = cloudStorageService;
         console.log('HistoryService 初始化完成，使用 Supabase 数据库存储');
     }
     async getHistory(userId) {
@@ -34,7 +36,7 @@ let HistoryService = class HistoryService {
             console.error('查询历史记录失败:', error);
             throw error;
         }
-        return (data || []).map((r) => ({
+        const records = (data || []).map((r) => ({
             id: r.id,
             skin_type: r.skin_type,
             concerns: r.concerns || [],
@@ -50,6 +52,18 @@ let HistoryService = class HistoryService {
             image_url: r.image_url || null,
             created_at: r.created_at,
         }));
+        const fileIDs = records
+            .map((r) => r.image_url)
+            .filter((url) => !!url && url.startsWith('cloud://'));
+        if (fileIDs.length > 0) {
+            const urlMap = await this.cloudStorageService.getTempFileURLs(fileIDs);
+            for (const r of records) {
+                if (r.image_url && urlMap.has(r.image_url)) {
+                    r.image_url = urlMap.get(r.image_url);
+                }
+            }
+        }
+        return records;
     }
     async saveHistory(record) {
         const client = (0, supabase_client_1.getSupabaseClient)();
@@ -100,6 +114,7 @@ let HistoryService = class HistoryService {
 exports.HistoryService = HistoryService;
 exports.HistoryService = HistoryService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [user_service_1.UserService])
+    __metadata("design:paramtypes", [user_service_1.UserService,
+        cloud_storage_service_1.CloudStorageService])
 ], HistoryService);
 //# sourceMappingURL=history.service.js.map

@@ -244,10 +244,20 @@ let SkinService = class SkinService {
                 spots: validateAndClamp(result.spots, 0),
                 pores: validateAndClamp(result.pores, 0),
                 blackheads: validateAndClamp(result.blackheads, 0),
-                recommendations: Array.isArray(result.recommendations) ? result.recommendations : []
+                recommendations: Array.isArray(result.recommendations) ? result.recommendations : [],
+                imageUrl: null,
             };
             console.log(`[${imageTimestamp}] === 最终返回结果 ===`);
             console.log(`[${imageTimestamp}]`, JSON.stringify(finalResult, null, 2));
+            let permanentImageUrl = null;
+            try {
+                permanentImageUrl = await this.cloudStorageService.uploadFileReturnFileID(file);
+                console.log(`[${imageTimestamp}] 图片已上传云存储，fileID:`, permanentImageUrl);
+            }
+            catch (err) {
+                console.warn(`[${imageTimestamp}] 云存储上传失败，使用本地路径:`, err);
+            }
+            finalResult.imageUrl = permanentImageUrl;
             const isValidResult = (result.skinType &&
                 result.skinType !== '请提供面部照片' &&
                 result.skinType !== '无法识别' &&

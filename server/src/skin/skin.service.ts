@@ -257,7 +257,7 @@ export class SkinService {
         return Math.min(100, Math.max(0, num));
       };
 
-      const finalResult = {
+      const finalResult: SkinAnalysisResult = {
         skinType: result.skinType || '中性皮肤',
         concerns: Array.isArray(result.concerns) ? result.concerns : [],
         moisture: validateAndClamp(result.moisture, 70),
@@ -268,11 +268,22 @@ export class SkinService {
         spots: validateAndClamp(result.spots, 0),
         pores: validateAndClamp(result.pores, 0),
         blackheads: validateAndClamp(result.blackheads, 0),
-        recommendations: Array.isArray(result.recommendations) ? result.recommendations : []
+        recommendations: Array.isArray(result.recommendations) ? result.recommendations : [],
+        imageUrl: null,
       };
 
       console.log(`[${imageTimestamp}] === 最终返回结果 ===`);
       console.log(`[${imageTimestamp}]`, JSON.stringify(finalResult, null, 2));
+
+      // 上传图片到云存储，返回永久 fileID
+      let permanentImageUrl: string | null = null;
+      try {
+        permanentImageUrl = await this.cloudStorageService.uploadFileReturnFileID(file);
+        console.log(`[${imageTimestamp}] 图片已上传云存储，fileID:`, permanentImageUrl);
+      } catch (err) {
+        console.warn(`[${imageTimestamp}] 云存储上传失败，使用本地路径:`, err);
+      }
+      finalResult.imageUrl = permanentImageUrl;
 
       // 检查结果是否有效
       const isValidResult = (
