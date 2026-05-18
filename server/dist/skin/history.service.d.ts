@@ -1,31 +1,7 @@
 import { UserService } from '@/user/user.service';
-interface HistoryRecord {
-    id: number;
-    userId: number;
-    skinType: string;
-    concerns: string[];
-    moisture: number;
-    oiliness: number;
-    sensitivity: number;
-    acne: number;
-    wrinkles: number;
-    spots: number;
-    pores: number;
-    blackheads: number;
-    recommendations: string[];
-    imageUrl: string | null;
-    createdAt: string;
-    updatedAt: string;
-}
 export declare class HistoryService {
     private readonly userService;
-    private readonly dataDir;
-    private readonly historyFilePath;
-    private nextId;
     constructor(userService: UserService);
-    private ensureDataDir;
-    private readHistoryFile;
-    private writeHistoryFile;
     getHistory(userId?: number): Promise<{
         id: any;
         skin_type: any;
@@ -56,9 +32,8 @@ export declare class HistoryService {
         spots?: number;
         pores?: number;
         blackheads?: number;
-    }): Promise<HistoryRecord>;
+    }): Promise<any>;
     deleteHistory(id: string): Promise<{
         success: boolean;
     }>;
 }
-export {};
