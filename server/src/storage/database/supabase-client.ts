@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { execSync } from 'child_process';
 
 let envLoaded = false;
+let cachedClient: SupabaseClient | null = null;
 
 interface SupabaseCredentials {
   url: string;
@@ -83,33 +84,40 @@ function getSupabaseCredentials(): SupabaseCredentials {
   return { url, anonKey };
 }
 
+// 单例 Supabase client，避免每次请求重新建立连接
 function getSupabaseClient(token?: string): SupabaseClient {
   const { url, anonKey } = getSupabaseCredentials();
 
   if (token) {
+    // token 场景不缓存（如管理员操作等特殊场景）
     return createClient(url, anonKey, {
-      global: {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-      db: {
-        timeout: 60000,
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      db: { timeout: 60000 },
+      auth: { autoRefreshToken: false, persistSession: false },
     });
   }
 
-  return createClient(url, anonKey, {
-    db: {
-      timeout: 60000,
-    },
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  if (!cachedClient) {
+    cachedClient = createClient(url, anonKey, {
+      db: { timeout: 60000 },
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    console.log('Supabase 单例 client 已创建');
+  }
+
+  return cachedClient;
 }
+
+// 定期心跳保活
+setInterval(async () => {
+  if (cachedClient) {
+    try {
+      await cachedClient.from('users').select('id', { count: 'exact', head: true });
+    } catch {
+      // 连接断开则重建
+      cachedClient = null;
+    }
+  }
+}, 5 * 60 * 1000); // 每 5 分钟 ping 一次
 
 export { loadEnv, getSupabaseCredentials, getSupabaseClient };

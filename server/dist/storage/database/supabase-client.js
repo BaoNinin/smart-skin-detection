@@ -6,6 +6,7 @@ exports.getSupabaseClient = getSupabaseClient;
 const supabase_js_1 = require("@supabase/supabase-js");
 const child_process_1 = require("child_process");
 let envLoaded = false;
+let cachedClient = null;
 function loadEnv() {
     if (envLoaded || (process.env.COZE_SUPABASE_URL && process.env.COZE_SUPABASE_ANON_KEY)) {
         return;
@@ -76,26 +77,28 @@ function getSupabaseClient(token) {
     const { url, anonKey } = getSupabaseCredentials();
     if (token) {
         return (0, supabase_js_1.createClient)(url, anonKey, {
-            global: {
-                headers: { Authorization: `Bearer ${token}` },
-            },
-            db: {
-                timeout: 60000,
-            },
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-            },
+            global: { headers: { Authorization: `Bearer ${token}` } },
+            db: { timeout: 60000 },
+            auth: { autoRefreshToken: false, persistSession: false },
         });
     }
-    return (0, supabase_js_1.createClient)(url, anonKey, {
-        db: {
-            timeout: 60000,
-        },
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-        },
-    });
+    if (!cachedClient) {
+        cachedClient = (0, supabase_js_1.createClient)(url, anonKey, {
+            db: { timeout: 60000 },
+            auth: { autoRefreshToken: false, persistSession: false },
+        });
+        console.log('Supabase 单例 client 已创建');
+    }
+    return cachedClient;
 }
+setInterval(async () => {
+    if (cachedClient) {
+        try {
+            await cachedClient.from('users').select('id', { count: 'exact', head: true });
+        }
+        catch {
+            cachedClient = null;
+        }
+    }
+}, 5 * 60 * 1000);
 //# sourceMappingURL=supabase-client.js.map
