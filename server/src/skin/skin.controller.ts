@@ -25,6 +25,11 @@ export class SkinController {
     console.log('文件大小:', file.size);
     console.log('用户ID:', userId);
 
+    // 超过 1MB 的图片记录告警，方便排查异常上传
+    if (file.size > 1024 * 1024) {
+      console.warn(`⚠️ 大图片上传: ${(file.size / 1024 / 1024).toFixed(1)}MB`);
+    }
+
     try {
       const result = await this.skinService.analyzeSkinImage(file);
       return {

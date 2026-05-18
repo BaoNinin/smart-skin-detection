@@ -26,7 +26,7 @@ exports.SkinModule = SkinModule = __decorate([
             user_module_1.UserModule,
             platform_express_1.MulterModule.register({
                 limits: {
-                    fileSize: 10 * 1024 * 1024,
+                    fileSize: 3 * 1024 * 1024,
                 },
                 dest: '/tmp/uploads',
             }),

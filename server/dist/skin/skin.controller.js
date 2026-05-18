@@ -30,6 +30,9 @@ let SkinController = class SkinController {
         console.log('收到皮肤分析请求，文件名:', file.originalname);
         console.log('文件大小:', file.size);
         console.log('用户ID:', userId);
+        if (file.size > 1024 * 1024) {
+            console.warn(`⚠️ 大图片上传: ${(file.size / 1024 / 1024).toFixed(1)}MB`);
+        }
         try {
             const result = await this.skinService.analyzeSkinImage(file);
             return {

@@ -14,7 +14,7 @@ import { UserModule } from '../user/user.module';
     UserModule,
     MulterModule.register({
       limits: {
-        fileSize: 10 * 1024 * 1024,
+        fileSize: 3 * 1024 * 1024,  // 3MB——微信相机拍照约150KB，3MB足够且防大文件攻击
       },
       dest: '/tmp/uploads',
     }),
