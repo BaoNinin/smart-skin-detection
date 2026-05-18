@@ -32,7 +32,6 @@ export default function CameraPreviewPage() {
       return
     }
     if (!checkCooldown()) return
-    Taro.setStorageSync('lastAnalysisTime', Date.now())
     // 如果是 base64 data URI，需要先保存为文件再传给分析页
     if (imageSrc.startsWith('data:')) {
       // 把 base64 写入临时文件后跳转

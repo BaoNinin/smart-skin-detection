@@ -161,7 +161,6 @@ export default function CameraPage() {
       }, 500)
       return
     }
-    Taro.setStorageSync('lastAnalysisTime', Date.now())
     Taro.redirectTo({
       url: `/pages/analyzing/index?imagePath=${encodeURIComponent(path)}&scanSuccess=true`,
     })
